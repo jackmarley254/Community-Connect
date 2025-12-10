@@ -49,6 +49,6 @@ This project aligns with SDG 11: Sustainable Cities and Communities.
 - Target 11.B: Improves resilience through efficient disaster/maintenance reporting systems.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
-- Developed by Jackson G. Ndiritu ICT Support Technician & Junior Software Developer
+### Developed by Jackson G. Ndiritu ICT Support Technician & Junior Software Developer
