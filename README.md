@@ -1,12 +1,12 @@
-Community Connect Platform
+### Community Connect Platform
 
-Modern Property Management. Made Simple.
+# Modern Property Management. Made Simple.
 
-📖 Overview
+ * 📖 Overview
 
-Community Connect is a bespoke, multi-tenant Property Management System (PMS) designed to digitize and automate the operations of residential real estate management. Built to solve the challenges of manual invoicing, delayed communication, and operational inefficiency, the platform serves as a centralized hub for four distinct stakeholders: Property Managers, Home Owners, Tenants, and Security Personnel.
+- Community Connect is a bespoke, multi-tenant Property Management System (PMS) designed to digitize and automate the operations of residential real estate management. Built to solve the challenges of manual invoicing, delayed communication, and operational inefficiency, the platform serves as a centralized hub for four distinct stakeholders: Property Managers, Home Owners, Tenants, and Security Personnel.
 
-This project was developed as a comprehensive solution for managing multiple properties, automating financial workflows, and ensuring real-time resident services.
+- This project was developed as a comprehensive solution for managing multiple properties, automating financial workflows, and ensuring real-time resident services.
 
 🚀 Key Features
 
