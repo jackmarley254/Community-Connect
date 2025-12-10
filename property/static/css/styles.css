@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #2c3e50; /* Luxia Dark Blue */
+    --accent-color: #3498db;  /* Bright Blue */
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --light-bg: #f3f4f6; /* Soft Gray-Blue for Dashboard Background */
+    --sidebar-width: 250px;
+}
+
+/* --- 1. Sticky Footer & Layout Setup --- */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--light-bg); /* Appealing Dashboard Color */
+    color: #333;
+    display: flex;
+    flex-direction: column; /* This forces the layout to stack vertically */
+}
+
+/* The main content area grows to fill empty space, pushing footer down */
+.main-wrapper {
+    flex: 1 0 auto;
+}
+
+/* Footer stays at the bottom */
+footer {
+    flex-shrink: 0;
+    background-color: #e9ecef;
+    border-top: 1px solid #dee2e6;
+    margin-top: auto; /* Double insurance for sticky behavior */
+}
+
+/* --- Card Styling --- */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); /* Softer shadow */
+    transition: transform 0.2s ease-in-out;
+    background-color: #d58080;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #f0f0f0;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* --- Navbar & Brand --- */
+.navbar-custom {
+    background-color: #ffffff; /* White clean navbar */
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0.8rem 1rem;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--primary-color) !important;
+    font-size: 1.4rem;
+}
+
+/* --- Stats Cards (Dashboard) --- */
+.stat-card {
+    border-left: 4px solid var(--accent-color);
+}
+.stat-card.success { border-left-color: var(--success-color); }
+.stat-card.warning { border-left-color: var(--warning-color); }
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Table Styling --- */
+.table-custom th {
+    background-color: #f9fafb;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+.table-custom td {
+    vertical-align: middle;
+}
+
+/* --- Login Page Specific --- */
+.login-body {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

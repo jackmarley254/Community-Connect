@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Security Desk - {{ organization_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card p-4">
+            <h2 class="card-title text-center text-dark mb-4"><i class="fas fa-clipboard-list me-2"></i>Log Delivery / Visitor</h2>
+            <p class="text-center text-muted">Use this form to send instant alerts to tenants in {{ organization_name }} properties.</p>
+            
+            <form id="notificationForm" method="POST">
+                {% csrf_token %} 
+
+                <div class="mb-3">
+                    <label for="unit_number" class="form-label fw-bold">Unit/Apt Number</label>
+                    <input type="text" class="form-control form-control-lg" id="unit_number" name="unit_number" placeholder="e.g., 3B, 101" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="message" class="form-label fw-bold">Message / Details</label>
+                    <textarea class="form-control" id="message" name="message" rows="5" placeholder="e.g., Amazon delivery left at front desk, Visitor (John Doe) requesting access." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100 py-2">
+                    <i class="fas fa-paper-plane me-2"></i> Send Instant Alert
+                </button>
+            </form>
+
+            <!-- Feedback Message Container -->
+            <div id="feedbackMessage" class="mt-4" role="alert" style="display: none;"></div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // API URL for submission
+    const NOTIFY_API_URL = "{% url 'property:security_desk_notify_api' %}"; 
+    
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+
+    document.getElementById('notificationForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+
+        const form = e.target;
+        const formData = new FormData(form);
+        const feedbackDiv = document.getElementById('feedbackMessage');
+        
+        // Show loading state
+        feedbackDiv.className = 'alert alert-info';
+        feedbackDiv.textContent = 'Sending notification...';
+        feedbackDiv.style.display = 'block';
+
+        try {
+            // Use Fetch API to send the data asynchronously (NO full page reload)
+            const response = await fetch(NOTIFY_API_URL, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken, 
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                feedbackDiv.textContent = result.message;
+                feedbackDiv.className = 'alert alert-success mt-4';
+                form.reset(); // Clear form on success
+            } else {
+                const errorMsg = result.message || 'Failed to send notification. Check unit number and tenant status.';
+                feedbackDiv.textContent = errorMsg;
+                feedbackDiv.className = 'alert alert-danger mt-4';
+            }
+
+        } catch (error) {
+            console.error('Network or server error:', error);
+            feedbackDiv.textContent = 'A critical error occurred. Check network connection.';
+            feedbackDiv.className = 'alert alert-danger mt-4';
+        }
+    });
+
+</script>
+{% endblock content %}

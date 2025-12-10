@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 display-6 text-warning"><i class="fas fa-user me-2"></i>Welcome, {{ user.username }}</h1>
+
+<div class="row g-4">
+    <!-- Unit Details -->
+    <div class="col-md-6">
+        <div class="card h-100 p-3 bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-warning"><i class="fas fa-home me-2"></i>My Residence</h5>
+                {% if unit %}
+                    <p class="mb-1"><strong>Unit Number:</strong> {{ unit.unit_number }}</p>
+                    <p class="mb-1"><strong>Property:</strong> {{ unit.property.name }}</p>
+                    <p class="mb-1"><strong>Landlord:</strong> {{ unit.owner.username }}</p>
+                {% else %}
+                    <p class="text-danger">No unit currently assigned to you.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Parking Details -->
+    <div class="col-md-6">
+        <div class="card h-100 p-3 bg-light">
+            <div class="card-body">
+                <h5 class="card-title text-warning"><i class="fas fa-parking me-2"></i>My Parking</h5>
+                {% if parking %}
+                    <p class="mb-1"><strong>Lot Number:</strong> {{ parking.lot_number }}</p>
+                    <p class="mb-1"><strong>Property:</strong> {{ parking.property.name }}</p>
+                {% else %}
+                    <p class="text-danger">No parking lot currently assigned to you.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Notice Board -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 text-dark"><i class="fas fa-bullhorn me-2 text-warning"></i>Notice Board</h5>
+            </div>
+            <div class="card-body">
+                {% for notice in announcements %}
+                <div class="alert alert-light border-start border-warning border-4 shadow-sm mb-3">
+                    <h6 class="fw-bold mb-1">{{ notice.title }}</h6>
+                    <p class="mb-1 text-muted">{{ notice.content }}</p>
+                    <small class="text-muted" style="font-size: 0.75rem;">Posted: {{ notice.created_at|date:"M d, Y" }}</small>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-4">No recent announcements from management.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: My Tickets -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 text-dark"><i class="fas fa-wrench me-2 text-primary"></i>My Repairs</h5>
+                <a href="{% url 'property:create_ticket' %}" class="btn btn-sm btn-primary">+ Report</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for ticket in my_tickets %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-1 text-truncate" style="max-width: 150px;">{{ ticket.title }}</h6>
+                            {% if ticket.status == 'OPEN' %}
+                                <span class="badge bg-danger">Open</span>
+                            {% elif ticket.status == 'RESOLVED' %}
+                                <span class="badge bg-success">Fixed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">ID: #{{ ticket.id }} • {{ ticket.created_at|date:"M d" }}</small>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">No active maintenance tickets.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mt-5 mb-3"><i class="fas fa-file-invoice-dollar me-2 text-primary"></i>My Invoices</h2>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Description</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Payment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in my_invoices %}
+                <tr>
+                    <td class="ps-4">{{ invoice.description }} ({{ invoice.get_sender_role_display }})</td>
+                    <td class="fw-bold">KES {{ invoice.amount }}</td>
+                    <td>{{ invoice.due_date }}</td>
+                    <td>
+                        {% if invoice.is_paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-danger">Unpaid</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        {% if not invoice.is_paid %}
+                            <button class="btn btn-sm btn-primary pay-now-btn" data-invoice-id="{{ invoice.id }}" data-amount="{{ invoice.amount }}">
+                                Pay Now (M-Pesa)
+                            </button>
+                        {% else %}
+                            <small class="text-muted">Ref: {{ invoice.mpesa_code }}</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No pending invoices.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="payment-status" class="mt-3"></div>
+
+
+<h2 class="mt-5 mb-3"><i class="fas fa-bell me-2"></i>Security Notifications</h2>
+
+<!-- Real-time Alert Box -->
+<div id="newNotificationAlert" class="alert alert-success d-none shadow-sm" role="alert">
+    <i class="fas fa-bell me-2"></i> <strong>New Notification!</strong> Check the list below.
+</div>
+
+<div class="card">
+    <div class="card-body notification-list" id="notificationsContainer">
+        <p class="text-center text-muted" id="loadingMessage">Loading messages...</p>
+        <!-- Notifications will be loaded here by JavaScript -->
+    </div>
+</div>
+
+<script>
+    // URL for the notification API
+    const NOTIFICATION_API_URL = "{% url 'property:get_unread_notifications_api' %}"; 
+    const POLLING_INTERVAL = 5000; // Poll every 5 seconds
+
+    /**
+     * Fetches new notifications using the Fetch API and updates the DOM.
+     */
+    async function fetchNotifications() {
+        try {
+            const response = await fetch(NOTIFICATION_API_URL, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            const container = document.getElementById('notificationsContainer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const newNotificationAlert = document.getElementById('newNotificationAlert');
+
+            if (loadingMessage) loadingMessage.remove();
+
+            if (data.count > 0) {
+                // Show banner for new notifications
+                newNotificationAlert.classList.remove('d-none');
+                setTimeout(() => newNotificationAlert.classList.add('d-none'), 10000); // Hide after 10s
+
+                data.notifications.forEach(notif => {
+                    // Check if this specific notification already exists to prevent duplication
+                    const existing = document.getElementById(`notif-${notif.id}`);
+                    if (existing) return;
+
+                    const item = document.createElement('div');
+                    item.id = `notif-${notif.id}`;
+                    item.className = 'alert alert-info p-3 mb-3 border-left-primary'; 
+                    item.role = 'alert';
+                    
+                    const date = new Date(notif.timestamp).toLocaleTimeString();
+                    const htmlContent = `
+                        <div>
+                            <h6 class="mb-1 text-dark"><i class="fas fa-box-open me-2"></i>Security Desk Alert</h6>
+                            <p class="mb-0">${notif.message}</p>
+                            <small class="text-muted">${date}</small>
+                        </div>
+                    `;
+                    item.innerHTML = htmlContent;
+                    
+                    // Add new notification to the top of the list
+                    container.prepend(item);
+                });
+
+            } else if (container.children.length === 0) {
+                // Display initial message if no historical notifications were loaded
+                container.innerHTML = '<p class="text-center text-muted">You have no new messages at this time.</p>';
+            }
+
+        } catch (error) {
+            console.error("Error fetching notifications:", error);
+            const container = document.getElementById('notificationsContainer');
+            container.innerHTML = `<div class="alert alert-danger" role="alert">Could not connect to notification service.</div>`;
+        }
+    }
+
+    const PAY_API_URL = "{% url 'property:tenant_pay_invoice_api' %}";
+    
+    // Payment Logic
+    document.querySelectorAll('.pay-now-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const invoiceId = e.target.getAttribute('data-invoice-id');
+            const amount = e.target.getAttribute('data-amount');
+            const statusDiv = document.getElementById('payment-status');
+            
+            statusDiv.innerHTML = `<div class="alert alert-warning">Initiating M-Pesa payment for KES ${amount}. Please approve the STK Push on your phone...</div>`;
+            
+            const formData = new FormData();
+            formData.append('invoice_id', invoiceId);
+
+            try {
+                const response = await fetch(PAY_API_URL, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    body: formData
+                });
+                
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    statusDiv.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+                    // Reload to show 'Paid' status and Mpesa code
+                    setTimeout(() => window.location.reload(), 2000); 
+                } else {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">${result.message || 'Payment failed or timed out.'}</div>`;
+                }
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Network error during payment processing.</div>`;
+            }
+        });
+    });
+
+    // Start polling when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchNotifications(); 
+        setInterval(fetchNotifications, POLLING_INTERVAL);
+    });
+
+</script>
+{% endblock content %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Unit Creator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-cubes me-2"></i>Bulk Unit Creator</h4>
+            </div>
+            <div class="card-body p-5">
+                <p class="text-muted mb-4">Quickly generate a range of units (e.g., 101 to 200) for a property. A default owner is required for assignment, but can be changed later.</p>
+
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    <!-- 1. Select Property -->
+                    <div class="mb-4">
+                        <label for="property_id" class="form-label fw-bold">Select Property</label>
+                        <select class="form-select form-select-lg" id="property_id" name="property_id" required>
+                            <option value="" disabled selected>-- Choose a Property --</option>
+                            {% for property in properties %}
+                                <option value="{{ property.id }}">{{ property.name }} ({{ property.address }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a property.</div>
+                    </div>
+
+                    <!-- 2. Unit Range -->
+                    <div class="row mb-4 g-3">
+                        <div class="col-md-6">
+                            <label for="start_num" class="form-label fw-bold">Start Unit Number (e.g., 101)</label>
+                            <input type="number" class="form-control" id="start_num" name="start_num" required placeholder="101">
+                            <div class="invalid-feedback">A starting number is required.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_num" class="form-label fw-bold">End Unit Number (e.g., 150)</label>
+                            <input type="number" class="form-control" id="end_num" name="end_num" required placeholder="150">
+                            <div class="invalid-feedback">An ending number is required.</div>
+                        </div>
+                        <small class="text-muted mt-2">Units will be created from the start number up to and including the end number.</small>
+                    </div>
+
+                    <!-- 3. Default Owner -->
+                    <div class="mb-5">
+                        <label for="default_owner_id" class="form-label fw-bold text-success">Default Home Owner/Landlord</label>
+                        <select class="form-select" id="default_owner_id" name="default_owner_id" required>
+                            <option value="" disabled selected>-- Select the Default Owner --</option>
+                            {% for owner in home_owners %}
+                                <option value="{{ owner.id }}">{{ owner.username }} ({{ owner.first_name }} {{ owner.last_name }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">A default owner must be selected as per model constraints.</div>
+                        <small class="text-muted">This owner will be assigned to all newly created units. This can be modified later per unit.</small>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                            <i class="fas fa-magic me-2"></i> Generate & Save Units
+                        </button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

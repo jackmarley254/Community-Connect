@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | {{ organization_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-0">{{ organization_name }}</h2>
+        <p class="text-muted">Property Manager Overview</p>
+    </div>
+    <div>
+        <a href="{% url 'property:bulk_create_units' %}" class="btn btn-success shadow-sm me-2">
+            <i class="fas fa-plus me-2"></i>Bulk Add Units
+        </a>
+        <button class="btn btn-primary shadow-sm"><i class="fas fa-building me-2"></i>Add Property</button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card stat-card p-4 h-100 bg-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="stat-label mb-1">Total Properties</p>
+                    <h3 class="stat-value mb-0">{{ properties|length }}</h3>
+                </div>
+                <div class="icon-shape bg-light text-primary rounded p-3">
+                    <i class="fas fa-building fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card success p-4 h-100 bg-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="stat-label mb-1">Total Units</p>
+                    <h3 class="stat-value text-success mb-0">{{ total_units }}</h3>
+                </div>
+                <div class="icon-shape bg-light text-success rounded p-3">
+                    <i class="fas fa-door-open fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card warning p-4 h-100 bg-white">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="stat-label mb-1">Occupancy Rate</p>
+                    <h3 class="stat-value text-warning mb-0">{{ occupancy_rate }}</h3>
+                </div>
+                <div class="icon-shape bg-light text-warning rounded p-3">
+                    <i class="fas fa-chart-pie fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Properties Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list me-2"></i>Managed Properties</h5>
+        <div class="input-group w-25">
+            <input type="text" class="form-control form-control-sm" placeholder="Search...">
+            <button class="btn btn-outline-secondary btn-sm"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Property Name</th>
+                    <th>Address</th>
+                    <th class="text-center">Units</th>
+                    <th class="text-center">Occupancy</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for property in properties %}
+                <tr>
+                    <td class="ps-4 fw-bold text-dark">{{ property.name }}</td>
+                    <td class="text-muted"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ property.address }}</td>
+                    
+                    <td class="text-center"><span class="badge bg-light text-dark border">{{ property.total_units_count }}</span></td>
+                    
+                    <td class="text-center">
+                        <div class="progress" style="height: 6px; width: 80px; margin: auto;">
+                            <!-- Using the model helper here: -->
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ property.occupancy_percentage }}%"></div>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            {{ property.occupied_units_count }}/{{ property.total_units_count }}
+                        </small>
+                    </td>
+                    
+                    <td class="text-end pe-4">
+                        <a href="#" class="btn btn-sm btn-light text-primary border"><i class="fas fa-eye"></i> Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        No properties found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!--Unit Financial Breakdown-->
+<h2 class="mt-5 mb-3"><i class="fas fa-dollar-sign me-2 text-success"></i>Unit Financial Breakdown</h2>
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Unit #</th>
+                    <th>Property</th>
+                    <th>Tenant</th>
+                    <th>Latest Invoice</th>
+                    <th>Amount Due</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in unit_financial_data %}
+                <tr>
+                    <td class="ps-4 fw-bold">{{ data.unit_number }}</td>
+                    <td>{{ data.property_name }}</td>
+                    <td>{{ data.tenant }}</td>
+                    <td>{{ data.due_date|default:"N/A" }}</td>
+                    <td>KES {{ data.amount_due|default:"0.00" }}</td>
+                    <td>
+                        {% if data.status == 'Paid' %}
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Paid</span>
+                        {% elif data.status == 'Outstanding' %}
+                            <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Outstanding</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ data.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="#" class="btn btn-sm btn-light border">Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No units found in your organization.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

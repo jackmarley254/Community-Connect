@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Home Owner Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 display-6 text-success"><i class="fas fa-user-tie me-2"></i>My Properties & Leases</h1>
+
+<div class="row g-4">
+    <!-- Owned Units Card -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-home me-2"></i>Owned Units ({{ owned_units|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for unit in owned_units %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ unit.unit_number }}</strong> ({{ unit.property.name }})
+                            <br>
+                            {% if unit.current_tenant %}
+                                <small class="text-success">Tenant: {{ unit.current_tenant.username }}</small>
+                            {% else %}
+                                <small class="text-warning">Vacant</small>
+                            {% endif %}
+                        </div>
+                        <a href="#" class="btn btn-sm btn-outline-secondary">Manage</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted">You do not own any units.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Owned Parking Lots Card (Where assignment logic is implemented) -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-parking me-2"></i>Owned Parking Lots ({{ owned_parking|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for lot in owned_parking %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Lot {{ lot.lot_number }}</strong> ({{ lot.property.name }})
+                            <br>
+                            {% if lot.current_tenant %}
+                                <small class="text-primary">Assigned to: {{ lot.current_tenant.username }}</small>
+                            {% else %}
+                                <small class="text-warning">Unassigned</small>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2 assign-parking-btn" 
+                                    data-bs-toggle="modal" data-bs-target="#assignModal"
+                                    data-lot-id="{{ lot.id }}" 
+                                    data-tenants="{% for unit in owned_units %}{% if unit.current_tenant %}{{ unit.current_tenant.id }}:{{ unit.current_tenant.username }}:{{ unit.unit_number }}{% if not forloop.last %}|{% endif %}{% endif %}{% endfor %}">
+                                    Assign
+                                </button>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted">You do not own any parking lots.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NEW SECTION: Financials / Invoices -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-dark"><i class="fas fa-file-invoice-dollar me-2 text-secondary"></i>Service Charge Invoices</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Invoice #</th>
+                            <th>Unit</th>
+                            <th>Description</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td class="ps-4 text-muted">#{{ invoice.id }}</td>
+                            <td class="fw-bold">{{ invoice.unit.unit_number }}</td>
+                            <td>{{ invoice.description }}</td>
+                            <td>{{ invoice.due_date }}</td>
+                            <td class="fw-bold">KES {{ invoice.amount }}</td>
+                            <td>
+                                {% if invoice.is_paid %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not invoice.is_paid %}
+                                <button class="btn btn-sm btn-primary">Pay Now</button>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>Receipt</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No invoices found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Parking Assignment -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignModalLabel">Assign Parking Lot <span id="modalLotNumber"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignParkingForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="modalLotId" name="lot_id">
+                    <div class="mb-3">
+                        <label for="tenantSelect" class="form-label">Select Tenant (from your units):</label>
+                        <select class="form-select" id="tenantSelect" name="tenant_id" required>
+                            <option value="">-- Select a Tenant --</option>
+                            <!-- Options populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div id="assignFeedback" class="mt-3"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="assignParkingForm" class="btn btn-primary">Confirm Assignment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get CSRF token function (must be included in every Django/JS file for POST)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    const assignModal = document.getElementById('assignModal');
+    assignModal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        const lotId = button.getAttribute('data-lot-id');
+        const tenantsData = button.getAttribute('data-tenants');
+        const modalLotNumber = document.getElementById('modalLotNumber');
+        const modalLotId = document.getElementById('modalLotId');
+        const tenantSelect = document.getElementById('tenantSelect');
+
+        // Reset
+        tenantSelect.innerHTML = '<option value="">-- Select a Tenant --</option>';
+        document.getElementById('assignFeedback').textContent = '';
+
+        // Populate Modal Fields
+        modalLotId.value = lotId;
+        // NOTE: Since the button doesn't have the lot number, we'll use a placeholder
+        modalLotNumber.textContent = lotId; 
+
+        // Populate Tenants Select
+        if (tenantsData) {
+            tenantsData.split('|').forEach(tenantString => {
+                const parts = tenantString.split(':');
+                if (parts.length === 3) {
+                    const option = document.createElement('option');
+                    option.value = parts[0]; // Tenant ID
+                    option.textContent = `${parts[1]} (Unit ${parts[2]})`; // Username (Unit Number)
+                    tenantSelect.appendChild(option);
+                }
+            });
+        }
+    });
+
+    // Handle Form Submission via Fetch API
+    document.getElementById('assignParkingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const feedbackDiv = document.getElementById('assignFeedback');
+        
+        feedbackDiv.className = 'alert alert-info';
+        feedbackDiv.textContent = 'Assigning...';
+
+        try {
+            const response = await fetch("{% url 'property:ho_assign_parking_api' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                feedbackDiv.className = 'alert alert-success';
+                feedbackDiv.textContent = result.message;
+                // Optional: Reload the page to show the update, or update the list item dynamically
+                setTimeout(() => window.location.reload(), 1500); 
+            } else {
+                feedbackDiv.className = 'alert alert-danger';
+                feedbackDiv.textContent = result.message || 'Assignment failed.';
+            }
+
+        } catch (error) {
+            feedbackDiv.className = 'alert alert-danger';
+            feedbackDiv.textContent = 'Network error or server connection failed.';
+            console.error(error);
+        }
+    });
+</script>
+{% endblock content %}

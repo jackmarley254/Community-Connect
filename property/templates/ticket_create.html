@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Report Issue | Luxia Connect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary"><i class="fas fa-tools me-2"></i>Report a Maintenance Issue</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Issue Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g., Leaking Tap in Kitchen" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Priority Level</label>
+                        <select name="priority" class="form-select">
+                            <option value="LOW">Low - It's annoying but can wait</option>
+                            <option value="MEDIUM" selected>Medium - Needs fixing soon</option>
+                            <option value="HIGH">High - Affects daily living</option>
+                            <option value="EMERGENCY">Emergency - Safety hazard / Flooding</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Detailed Description</label>
+                        <textarea name="description" class="form-control" rows="5" placeholder="Describe the issue in detail..." required></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'property:tenant_dashboard' %}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5">Submit Ticket</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
