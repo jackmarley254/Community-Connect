@@ -40,41 +40,6 @@
 - Database: SQLite (Development) / PostgreSQL (Production ready)
 - Authentication: Custom Role-Based Access Control (RBAC)
 
-⚙️ Installation & Setup
-
-Follow these steps to run the project locally.
-
-Prerequisites
-
-Python 3.10+ installed
-
-Virtual Environment (recommended)
-
-1. Clone the Repository
-
-git clone 
-cd community-connect
-
-
-
-2. Create and Activate Virtual Environment
-
-# Windows
-python -m venv myenv
-myenv\Scripts\activate
-
-# Mac/Linux
-python3 -m venv myenv
-source myenv/bin/activate
-
-
-
-3. Install Dependencies
-
-pip install django
-# Or if you have a requirements.txt
-# pip install -r requirements.txt
-
 Note: Ensure the Manager and Security users are linked to the same Organization.
 
 ## 🌍 Sustainable Development Goals (SDG) Alignment
@@ -86,4 +51,4 @@ This project aligns with SDG 11: Sustainable Cities and Communities.
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Developed by Jackson G. Ndiritu ICT Support Technician & Junior Software Developer
+- Developed by Jackson G. Ndiritu ICT Support Technician & Junior Software Developer
