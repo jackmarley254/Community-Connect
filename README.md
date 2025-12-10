@@ -18,35 +18,27 @@
 
 ##  For Home Owners (Landlords)
 
-Financial Hub: A dedicated portal to view all service charge invoices, payment history, and due dates.
+- Financial Hub: A dedicated portal to view all service charge invoices, payment history, and due dates.
+- Asset Management: View owned units and manage parking lot assignments.
+- Tenant Invoicing: Ability to generate and send rent invoices directly to their current tenants.
 
-Asset Management: View owned units and manage parking lot assignments.
+## For Tenants (Residents)
 
-Tenant Invoicing: Ability to generate and send rent invoices directly to their current tenants.
+- Instant Alerts: Real-time notifications for visitors and package deliveries via a polling system linked to the Security Desk.
+- Maintenance Ticketing: Submit repair requests (e.g., "Leaking pipe") and track their status from 'Open' to 'Resolved'.
+- M-Pesa Integration (Simulated): "Pay Now" functionality for rent and service charge invoices.
 
-👥 For Tenants (Residents)
+## For Security Desk
 
-Instant Alerts: Real-time notifications for visitors and package deliveries via a polling system linked to the Security Desk.
+- Rapid Alert System: A simplified, focused interface for logging visitor arrivals and deliveries, triggering instant alerts on tenant dashboards.
 
-Maintenance Ticketing: Submit repair requests (e.g., "Leaking pipe") and track their status from 'Open' to 'Resolved'.
+## Technology Stack
 
-M-Pesa Integration (Simulated): "Pay Now" functionality for rent and service charge invoices.
-
-🛡️ For Security Desk
-
-Rapid Alert System: A simplified, focused interface for logging visitor arrivals and deliveries, triggering instant alerts on tenant dashboards.
-
-🛠️ Technology Stack
-
-Backend Framework: Django 5 (Python)
-
-Frontend: Bootstrap 5, HTML5, CSS3
-
-Interactivity: Vanilla JavaScript, Fetch API (AJAX)
-
-Database: SQLite (Development) / PostgreSQL (Production ready)
-
-Authentication: Custom Role-Based Access Control (RBAC)
+- Backend Framework: Django 5 (Python)
+- Frontend: Bootstrap 5, HTML5, CSS3
+- Interactivity: Vanilla JavaScript, Fetch API (AJAX)
+- Database: SQLite (Development) / PostgreSQL (Production ready)
+- Authentication: Custom Role-Based Access Control (RBAC)
 
 ⚙️ Installation & Setup
 
@@ -83,42 +75,15 @@ pip install django
 # Or if you have a requirements.txt
 # pip install -r requirements.txt
 
-
-
-4. Apply Migrations
-
-python manage.py makemigrations
-python manage.py migrate
-
-
-
-5. Create a Superuser (Admin)
-
-python manage.py createsuperuser
-
-
-
-6. Run the Server
-
-python manage.py runserver
-
-
-
-Visit http://127.0.0.1:8000/ in your browser.
-
-
 Note: Ensure the Manager and Security users are linked to the same Organization.
 
-🌍 Sustainable Development Goals (SDG) Alignment
+## 🌍 Sustainable Development Goals (SDG) Alignment
 
 This project aligns with SDG 11: Sustainable Cities and Communities.
+- Target 11.3: Enhances inclusive and sustainable urbanization by digitizing management processes.
+- Target 11.B: Improves resilience through efficient disaster/maintenance reporting systems.
 
-Target 11.3: Enhances inclusive and sustainable urbanization by digitizing management processes.
-
-Target 11.B: Improves resilience through efficient disaster/maintenance reporting systems.
-
-📝 License
-
+## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 Developed by Jackson G. Ndiritu ICT Support Technician & Junior Software Developer
