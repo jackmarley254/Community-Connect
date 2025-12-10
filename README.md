@@ -1,28 +1,22 @@
-### Community Connect Platform
+# Community Connect Platform
 
-# Modern Property Management. Made Simple.
+## Modern Property Management. Made Simple.
 
- * 📖 Overview
-
+ * Overview
 - Community Connect is a bespoke, multi-tenant Property Management System (PMS) designed to digitize and automate the operations of residential real estate management. Built to solve the challenges of manual invoicing, delayed communication, and operational inefficiency, the platform serves as a centralized hub for four distinct stakeholders: Property Managers, Home Owners, Tenants, and Security Personnel.
 
 - This project was developed as a comprehensive solution for managing multiple properties, automating financial workflows, and ensuring real-time resident services.
 
-🚀 Key Features
+##  Key Features
+###  For Property Managers (Admin & Operations)
 
-🏢 For Property Managers (Admin & Operations)
+- Unified Dashboard: A bird's-eye view of all managed properties with real-time Occupancy Metrics.
+- Multi-Tenancy: Scalable architecture allowing different organizations to manage their portfolios in isolation.
+- Bulk Unit Creator: A powerful tool to generate hundreds of units (e.g., "Units 101-200") in seconds.
+- Financial Oversight: Track paid vs. unpaid invoices across all buildings instantly.
+- Digital Notice Board: Post official announcements visible only to residents of specific properties.
 
-Unified Dashboard: A bird's-eye view of all managed properties with real-time Occupancy Metrics.
-
-Multi-Tenancy: Scalable architecture allowing different organizations to manage their portfolios in isolation.
-
-Bulk Unit Creator: A powerful tool to generate hundreds of units (e.g., "Units 101-200") in seconds.
-
-Financial Oversight: Track paid vs. unpaid invoices across all buildings instantly.
-
-Digital Notice Board: Post official announcements visible only to residents of specific properties.
-
-🏠 For Home Owners (Landlords)
+##  For Home Owners (Landlords)
 
 Financial Hub: A dedicated portal to view all service charge invoices, payment history, and due dates.
 
