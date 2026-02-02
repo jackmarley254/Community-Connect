@@ -179,6 +179,8 @@ class Invoice(models.Model):
     due_date = models.DateField()
     is_paid = models.BooleanField(default=False)
     description = models.CharField(max_length=200, default="Monthly Service Charge")
+    payment_date = models.DateTimeField(null=True, blank=True)
+    mpesa_code = models.CharField(max_length=50, null=True, blank=True)
     
     def __str__(self):
         return f"Invoice #{self.id} - {self.unit.unit_number} - {self.amount}"

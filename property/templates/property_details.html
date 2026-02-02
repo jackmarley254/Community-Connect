@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ property.name }} Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'property:pm_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ property.name }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold text-dark mb-0">{{ property.name }}</h2>
+        <p class="text-muted"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ property.address }}</p>
+    </div>
+    
+    <div class="d-flex gap-3">
+        <div class="bg-white p-2 px-4 rounded shadow-sm border text-center">
+            <small class="d-block text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Occupancy</small>
+            <span class="fw-bold text-success">{{ occupied_units }}/{{ total_units }}</span>
+        </div>
+        <div class="bg-white p-2 px-4 rounded shadow-sm border text-center">
+            <small class="d-block text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Revenue</small>
+            <span class="fw-bold text-primary">Active</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Landlords -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-user-tie me-2 text-primary"></i>Landlords</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for landlord in landlords %}
+                    <div class="list-group-item py-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ landlord.first_name }} {{ landlord.last_name }}</h6>
+                                <small class="text-muted">@{{ landlord.username }}</small>
+                            </div>
+                            <a href="mailto:{{ landlord.email }}" class="btn btn-sm btn-light border"><i class="fas fa-envelope"></i></a>
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <i class="fas fa-phone me-1"></i> {{ landlord.phone_number|default:"N/A" }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-muted">No landlords found assigned to units.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Transactions / Payment Details -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-history me-2 text-success"></i>Transaction History</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Unit</th>
+                            <th>Payer (Tenant)</th>
+                            <th>Amount</th>
+                            <th>Ref Code</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in transactions %}
+                        <tr>
+                            <td class="ps-4 text-muted small">{{ invoice.payment_date|date:"M d, Y" }}</td>
+                            <td class="fw-bold">{{ invoice.unit.unit_number }}</td>
+                            <td>
+                                {% if invoice.unit.current_tenant %}
+                                    {{ invoice.unit.current_tenant.username }}
+                                {% else %}
+                                    <em class="text-muted">Vacant</em>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">KES {{ invoice.amount }}</td>
+                            <td class="font-monospace small text-primary">{{ invoice.mpesa_code|default:"-" }}</td>
+                            <td><span class="badge bg-success">Paid</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-receipt fa-2x mb-2 opacity-25"></i><br>
+                                No payments recorded yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

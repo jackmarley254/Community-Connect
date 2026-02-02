@@ -29,4 +29,7 @@ urlpatterns = [
     path('api/ho/assign_parking/', views.ho_assign_parking_api, name='ho_assign_parking_api'),
     path('api/admin/mark-paid/', views.mark_invoice_paid_api, name='mark_invoice_paid_api'),
     path('api/tenant/pay-invoice/', views.tenant_pay_invoice_api, name='tenant_pay_invoice_api'),
+    path('api/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
+    # Property Details View (List of Landlords & Payments)
+    path('pm/property/<int:property_id>/', views.property_details_view, name='property_details'),
 ]

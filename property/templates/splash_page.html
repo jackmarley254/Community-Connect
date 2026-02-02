@@ -4,139 +4,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Connect | Modern Property Management</title>
+    <title>Community Connect | Property Management</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- Custom CSS -->
+    <!-- Custom Theme CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
-        /* Specific styles for the splash page to match the image aesthetics */
+        /* Splash Specific Overrides to match the 2-Color Theme */
         .hero-section {
-            padding: 8rem 0;
-            background-color: #3498db; /* Very light blue background */
+            padding: 6rem 0;
+            background-color: var(--primary); /* Deep Navy Background */
+            color: var(--secondary); /* White Text */
         }
+        
         .hero-title {
             font-size: 3.5rem;
-            font-weight: 700;
-            color: #2c3e50;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: white;
         }
+        
         .hero-subtitle {
-            font-size: 3.5rem;
-            font-weight: 900;
-            color: #3498db; /* Bright Blue */
-            line-height: 1;
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #cbd5e1; /* Light Slate for subtitle */
+            margin-bottom: 2rem;
         }
+
+        .btn-splash-primary {
+            background-color: white;
+            color: var(--primary);
+            font-weight: 700;
+            padding: 0.75rem 2rem;
+            border: 2px solid white;
+        }
+
+        .btn-splash-primary:hover {
+            background-color: transparent;
+            color: white;
+        }
+
+        .btn-splash-outline {
+            background-color: transparent;
+            color: white;
+            border: 2px solid #cbd5e1;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+        }
+
+        .btn-splash-outline:hover {
+            border-color: white;
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Role Cards - Clean White look */
         .role-card {
-            border: 1px solid #ddd;
-            transition: box-shadow 0.3s;
-            min-height: 220px;
+            border: 1px solid var(--border-color);
+            background: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            padding: 2rem;
+            border-radius: 8px;
         }
+
         .role-card:hover {
-            box-shadow: 0 8px 15px rgba(52, 152, 219, 0.2);
-            border-color: #3498db;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            border-color: var(--primary);
+        }
+
+        .role-icon {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Carousel specific */
+        .carousel-item img {
+            border-radius: 8px;
+            max-height: 500px;
+            object-fit: cover;
+            filter: brightness(0.9); /* Slightly darken images to make text pop */
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-warning border-bottom py-3">
+
+    <!-- Transparent Navbar for Splash -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--secondary);">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{% url 'splash_page' %}">
-                <i class="fas fa-city me-2 text-primary"></i>Community Connect
+                <i class="fas fa-building me-2"></i>Community Connect
             </a>
-            <a href="{% url 'users:auth_login' %}" class="btn btn-primary fw-bold">Sign In</a>
+            <div class="ms-auto">
+                <a href="{% url 'users:auth_login' %}" class="btn btn-sm btn-outline-dark fw-bold px-4">Sign In</a>
+            </div>
         </div>
     </nav>
 
-    <!-- 1. HERO SECTION (Matching the provided image) -->
+    <!-- 1. HERO SECTION (Deep Navy & White) -->
     <header class="hero-section text-center">
         <div class="container">
-            <h1 class="hero-title mb-2">Modern Property Management</h1>
-            <h1 class="hero-subtitle mb-4">Made Simple</h1>
-            <p class="lead text-muted mb-5">Streamline your property operations with automated invoicing, real-time notifications, and comprehensive tenant management.</p>
-            
-            <p>
-                <a href="{% url 'users:auth_login' %}" class="btn btn-primary btn-lg fw-bold me-3 shadow-lg">Get Started</a>
-                <a href="#features" class="btn btn-outline-secondary btn-lg">Learn More</a>
+            <h1 class="hero-title mb-3">Property Management.<br>Simplified.</h1>
+            <p class="hero-subtitle mx-auto" style="max-width: 700px;">
+                A unified platform for automated invoicing, real-time security alerts, and seamless resident communication.
             </p>
+            
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'users:auth_login' %}" class="btn btn-splash-primary shadow-lg">Access Portal</a>
+                <a href="#features" class="btn btn-splash-outline">Explore Features</a>
+            </div>
         </div>
     </header>
 
-    <!-- 2. CAROUSEL SECTION (Placeholder for dynamic content) -->
-    <section class="py-5 bg-white border-top border-bottom">
+    <!-- 2. CAROUSEL SECTION (Visual Showcase) -->
+    <section class="py-5 bg-light-custom border-bottom">
         <div class="container">
-            <h3 class="text-center fw-bold mb-4 text-dark">See Our Platform In Action</h3>
-            <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner rounded-3 shadow-lg">
-                    <!-- Carousel Item 1 -->
-                    <div class="carousel-item active">
-                        <img src="https://placehold.co/1200x400/2c3e50/ffffff?text=PM+Dashboard+View" class="d-block w-100" alt="PM Dashboard Mockup">
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5 class="fw-bold">Real-time Financial Metrics</h5>
-                            <p>Track payments and occupancy status instantly.</p>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div id="heroCarousel" class="carousel slide shadow-lg rounded-3 overflow-hidden" data-bs-ride="carousel">
+                        <div class="carousel-indicators">
+                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
                         </div>
-                    </div>
-                    <!-- Carousel Item 2 -->
-                    <div class="carousel-item">
-                        <img src="https://placehold.co/1200x400/3498db/ffffff?text=Tenant+Alerts+Mockup" class="d-block w-100" alt="Tenant Alert Mockup">
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5 class="fw-bold">Instant Notifications and Ticketing</h5>
-                            <p>Alerts for deliveries and maintenance requests, all in one place.</p>
+                        <div class="carousel-inner">
+                            <!-- Dashboard Slide -->
+                            <div class="carousel-item active">
+                                <img src="https://placehold.co/1200x600/1e293b/ffffff?text=Unified+Dashboard+View" class="d-block w-100" alt="Dashboard">
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded p-3">
+                                    <h5 class="fw-bold">Real-time Financial Insight</h5>
+                                    <p class="mb-0">Track payments, occupancy, and maintenance requests instantly.</p>
+                                </div>
+                            </div>
+                            <!-- Security Slide -->
+                            <div class="carousel-item">
+                                <img src="https://placehold.co/1200x600/334155/ffffff?text=Security+Alert+Integration" class="d-block w-100" alt="Security">
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded p-3">
+                                    <h5 class="fw-bold">Instant Security Alerts</h5>
+                                    <p class="mb-0">Notify residents of visitors and deliveries in seconds.</p>
+                                </div>
+                            </div>
                         </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
                     </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
             </div>
         </div>
     </section>
 
-    <!-- 3. ROLE CARDS (Matching the provided image) -->
-    <section id="features" class="py-5">
+    <!-- 3. ROLE CARDS (Clean Grid) -->
+    <section id="features" class="py-5 bg-white">
         <div class="container">
-            <h3 class="text-center fw-bold mb-5 text-dark">Who Uses Community Connect?</h3>
-            <div class="row g-4 text-center">
+            <div class="text-center mb-5">
+                <h6 class="text-uppercase text-muted fw-bold ls-1">Ecosystem</h6>
+                <h2 class="fw-bold">Built for Every Stakeholder</h2>
+            </div>
+            
+            <div class="row g-4">
                 
-                <!-- Property Manager Card -->
+                <!-- Property Manager -->
                 <div class="col-md-3">
-                    <div class="card role-card p-4 h-100">
-                        <i class="fas fa-building fa-3x text-primary mb-3"></i>
-                        <h5 class="fw-bold">Property Managers</h5>
-                        <p class="text-muted small">Oversee multiple properties, manage units, and assign tenants with ease.</p>
+                    <div class="role-card text-center">
+                        <i class="fas fa-chart-line fa-3x role-icon"></i>
+                        <h5 class="fw-bold mb-3">Managers</h5>
+                        <p class="text-muted small">Automated billing, bulk unit creation, and occupancy tracking.</p>
                     </div>
                 </div>
 
-                <!-- Home Owners Card -->
+                <!-- Home Owner -->
                 <div class="col-md-3">
-                    <div class="card role-card p-4 h-100">
-                        <i class="fas fa-home fa-3x text-success mb-3"></i>
-                        <h5 class="fw-bold">Home Owners</h5>
-                        <p class="text-muted small">Track your properties, view tenant information, and manage parking.</p>
+                    <div class="role-card text-center">
+                        <i class="fas fa-file-invoice-dollar fa-3x role-icon"></i>
+                        <h5 class="fw-bold mb-3">Owners</h5>
+                        <p class="text-muted small">Transparency on invoices, unit assets, and parking assignments.</p>
                     </div>
                 </div>
 
-                <!-- Tenants Card -->
+                <!-- Tenant -->
                 <div class="col-md-3">
-                    <div class="card role-card p-4 h-100">
-                        <i class="fas fa-users fa-3x text-warning mb-3"></i>
-                        <h5 class="fw-bold">Tenants</h5>
-                        <p class="text-muted small">Receive real-time notifications for deliveries and visitor arrivals.</p>
+                    <div class="role-card text-center">
+                        <i class="fas fa-mobile-alt fa-3x role-icon"></i>
+                        <h5 class="fw-bold mb-3">Tenants</h5>
+                        <p class="text-muted small">Instant alerts, easy maintenance ticketing, and digital payments.</p>
                     </div>
                 </div>
 
-                <!-- Security Desk Card -->
+                <!-- Security -->
                 <div class="col-md-3">
-                    <div class="card role-card p-4 h-100">
-                        <i class="fas fa-shield-alt fa-3x text-danger mb-3"></i>
-                        <h5 class="fw-bold">Security Desk</h5>
-                        <p class="text-muted small">Log visitor arrivals and package deliveries instantly.</p>
+                    <div class="role-card text-center">
+                        <i class="fas fa-shield-alt fa-3x role-icon"></i>
+                        <h5 class="fw-bold mb-3">Security</h5>
+                        <p class="text-muted small">Rapid visitor logging and package notification system.</p>
                     </div>
                 </div>
 
@@ -144,8 +209,10 @@
         </div>
     </section>
     
-    <footer class="text-center text-muted py-4 mt-5 border-top bg-light">
-        <small>&copy; 2025 Community Connect. All rights reserved.</small>
+    <footer class="py-4" style="background-color: var(--primary); color: #94a3b8;">
+        <div class="container text-center">
+            <small>&copy; 2025 Community Connect Platform. All rights reserved.</small>
+        </div>
     </footer>
 
     <!-- Bootstrap JS -->

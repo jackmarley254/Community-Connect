@@ -1,113 +1,191 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+/* property/static/css/styles.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --primary-color: #2c3e50; /* Luxia Dark Blue */
-    --accent-color: #3498db;  /* Bright Blue */
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --light-bg: #f3f4f6; /* Soft Gray-Blue for Dashboard Background */
-    --sidebar-width: 250px;
+    /* --- THE 2-COLOR PALETTE --- */
+    --primary: #1e293b;       /* Deep Navy / Slate 800 */
+    --primary-hover: #0f172a; /* Darker Navy */
+    
+    --secondary: #ffffff;     /* Pure White */
+    --background: #f1f5f9;    /* Light Gray-Blue Background */
+    
+    --text-main: #334155;     /* Slate 700 */
+    --text-muted: #64748b;    /* Slate 500 */
+    
+    --border-color: #e2e8f0;  /* Light Border */
+    
+    /* Functional Colors (Use Sparingly) */
+    --success: #10b981;       /* Emerald */
+    --danger: #ef4444;        /* Red */
+    --warning: #f59e0b;       /* Amber */
 }
 
-/* --- 1. Sticky Footer & Layout Setup --- */
-html, body {
-    height: 100%;
-    margin: 0;
-}
-
+/* --- Global Reset & Typography --- */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--light-bg); /* Appealing Dashboard Color */
-    color: #333;
+    background-color: var(--background);
+    color: var(--text-main);
+    line-height: 1.6;
     display: flex;
-    flex-direction: column; /* This forces the layout to stack vertically */
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-/* The main content area grows to fill empty space, pushing footer down */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary);
+    font-weight: 700;
+    letter-spacing: -0.025em; /* Tight tracking for modern look */
+}
+
+a {
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+/* --- Layout Wrapper --- */
 .main-wrapper {
-    flex: 1 0 auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Footer stays at the bottom */
-footer {
-    flex-shrink: 0;
-    background-color: #e9ecef;
-    border-top: 1px solid #dee2e6;
-    margin-top: auto; /* Double insurance for sticky behavior */
-}
-
-/* --- Card Styling --- */
-.card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); /* Softer shadow */
-    transition: transform 0.2s ease-in-out;
-    background-color: #d58080;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-    background-color: #ffffff;
-    border-bottom: 1px solid #f0f0f0;
-    font-weight: 600;
-    padding: 1rem 1.5rem;
-    border-radius: 12px 12px 0 0 !important;
-}
-
-/* --- Navbar & Brand --- */
+/* --- Minimalist Navbar --- */
 .navbar-custom {
-    background-color: #ffffff; /* White clean navbar */
-    border-bottom: 1px solid #e0e0e0;
-    padding: 0.8rem 1rem;
+    background-color: var(--secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .navbar-brand {
-    font-weight: 700;
-    color: var(--primary-color) !important;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary) !important;
+    letter-spacing: -0.5px;
 }
 
-/* --- Stats Cards (Dashboard) --- */
+.nav-link {
+    font-weight: 500;
+    color: var(--text-muted) !important;
+    font-size: 0.95rem;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
+/* --- Cards (Clean & Flat) --- */
+.card {
+    background-color: var(--secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Slightly smaller radius */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* --- Buttons (Solid & Minimal) --- */
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.btn-outline-secondary {
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--background);
+    color: var(--primary);
+    border-color: var(--text-muted);
+}
+
+/* --- Tables (Clean Rows) --- */
+.table-custom {
+    margin-bottom: 0;
+}
+
+.table-custom thead th {
+    background-color: var(--background);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+}
+
+.table-custom tbody td {
+    padding: 1rem 1.5rem;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+/* --- Stats Cards (Modern Metrics) --- */
 .stat-card {
-    border-left: 4px solid var(--accent-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-.stat-card.success { border-left-color: var(--success-color); }
-.stat-card.warning { border-left-color: var(--warning-color); }
 
-.stat-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--primary-color);
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .stat-label {
-    color: #6c757d;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.5rem;
 }
 
-/* --- Table Styling --- */
-.table-custom th {
-    background-color: #f9fafb;
-    color: #6b7280;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-}
-.table-custom td {
-    vertical-align: middle;
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
 }
 
-/* --- Login Page Specific --- */
-.login-body {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* --- Footer --- */
+footer {
+    background-color: var(--secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem 0;
+    margin-top: auto;
+    color: var(--text-muted);
+    font-size: 0.875rem;
 }
+
+/* --- Utility Classes --- */
+.text-primary-custom { color: var(--primary); }
+.bg-light-custom { background-color: var(--background); }
+.shadow-sm-custom { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }

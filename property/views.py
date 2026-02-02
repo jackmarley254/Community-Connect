@@ -8,7 +8,9 @@ from django.utils import timezone
 from users.decorators import role_required
 from users.models import CustomUser
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice
-
+from .mpesa import lipa_na_mpesa_online
+from django.views.decorators.csrf import csrf_exempt
+import json
 # --- HELPER ---
 
 def get_user_organization(user):
@@ -385,23 +387,101 @@ def tenant_pay_invoice_api(request):
     invoice_id = request.POST.get('invoice_id')
     
     try:
-        invoice = Invoice.objects.get(
-            id=invoice_id,
-            unit__current_tenant=request.user,
-            is_paid=False
+        invoice = Invoice.objects.get(id=invoice_id, unit__current_tenant=request.user, is_paid=False)
+        
+        # 1. Get Tenant's Phone Number (Assuming it's stored in CustomUser)
+        phone_number = request.user.phone_number 
+        # Ensure phone format is 2547XXXXXXXX
+        if phone_number.startswith('0'):
+            phone_number = '254' + phone_number[1:]
+        
+        # 2. Initiate STK Push
+        response = lipa_na_mpesa_online(
+            phone_number=phone_number,
+            amount=invoice.amount,
+            account_reference=f"INV-{invoice.id}",
+            transaction_desc=f"Payment for Invoice #{invoice.id}"
         )
         
-        # --- M-PESA Simulation ---
-        invoice.is_paid = True
-        invoice.payment_date = timezone.now()
-        import random, string
-        invoice.mpesa_code = 'MP' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-        
-        invoice.save()
-        
-        return JsonResponse({'status': 'success', 'message': f'Payment successful! Invoice #{invoice_id} paid. Code: {invoice.mpesa_code}'})
-        
+        if 'ResponseCode' in response and response['ResponseCode'] == '0':
+            # STK Push sent successfully
+            # NOTE: We do NOT mark as paid yet. We wait for the Callback.
+            return JsonResponse({'status': 'success', 'message': 'STK Push sent to your phone. Please enter PIN to complete payment.'})
+        else:
+            error_msg = response.get('errorMessage', 'Failed to initiate payment.')
+            return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
+
     except Invoice.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Invoice not found or already paid.'}, status=404)
+        return JsonResponse({'status': 'error', 'message': 'Invoice not found.'}, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': f'Payment simulation failed: {str(e)}'}, status=500)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@csrf_exempt # Daraja won't have your CSRF token
+def mpesa_callback(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            stk_callback = data.get('Body', {}).get('stkCallback', {})
+            result_code = stk_callback.get('ResultCode')
+
+            if result_code == 0:
+                # Payment Successful!
+                meta_data = stk_callback.get('CallbackMetadata', {}).get('Item', [])
+
+                # Extract Receipt Number (M-Pesa Code)
+                receipt_number = next((item['Value'] for item in meta_data if item['Name'] == 'MpesaReceiptNumber'), None)
+
+                # You usually don't get the AccountReference back in the callback directly in Sandbox.
+                # In production, you might map the CheckoutRequestID to your Invoice.
+                # For simplicity here, you'd need to store the CheckoutRequestID when sending the request 
+                # to link it back to the invoice later.
+
+                print(f"Payment Confirmed: {receipt_number}")
+                # logic to find invoice and mark as paid would go here
+
+            else:
+                print("Payment Failed or Cancelled")
+
+        except Exception as e:
+            print(f"Callback Error: {e}")
+
+    return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
+
+@login_required
+@role_required(['PM'])
+def property_details_view(request, property_id):
+    """
+    Detailed view for a specific Property.
+    Shows: Landlords list, Transaction History (Payments).
+    """
+    org = get_user_organization(request.user)
+    if not org:
+        messages.error(request, "No Organization found.")
+        return redirect('property:pm_dashboard')
+
+    # Fetch the property, ensuring it belongs to the PM's organization
+    property_obj = get_object_or_404(Property, id=property_id, organization=org)
+    
+    # 1. Get all units in this property
+    units = Unit.objects.filter(property=property_obj).select_related('owner')
+    
+    # 2. Get distinct Landlords (Home Owners)
+    # We filter units that have an owner, then get distinct user IDs
+    landlord_ids = units.values_list('owner_id', flat=True).distinct()
+    landlords = CustomUser.objects.filter(id__in=landlord_ids)
+    
+    # 3. Get Payment Transactions (Paid Invoices)
+    # This allows the PM to "pick payment details"
+    transactions = Invoice.objects.filter(
+        unit__property=property_obj, 
+        is_paid=True
+    ).select_related('unit', 'unit__current_tenant').order_by('-payment_date')
+
+    context = {
+        'property': property_obj,
+        'landlords': landlords,
+        'transactions': transactions,
+        'total_units': units.count(),
+        'occupied_units': units.filter(current_tenant__isnull=False).count(),
+    }
+    return render(request, 'property_details.html', context)
