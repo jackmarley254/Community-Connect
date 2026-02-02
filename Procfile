@@ -1,0 +1,1 @@
+web: gunicorn community_connect.wsgi
