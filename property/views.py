@@ -23,6 +23,31 @@ def get_user_organization(user):
     except AttributeError:
         return None
 
+# ==========================================
+# 1. THE DISPATCHER (Traffic Cop) - THIS FIXES THE BLANK SCREEN
+# ==========================================
+@login_required
+def dashboard_redirect_view(request):
+    """
+    Redirects the user to their specific dashboard based on their Role.
+    Linked to the '/home/' URL.
+    """
+    user = request.user
+    
+    if user.role == 'PM':
+        return redirect('property:pm_dashboard')
+    elif user.role == 'HO':
+        return redirect('property:ho_dashboard')
+    elif user.role == 'T':
+        return redirect('property:tenant_dashboard')
+    elif user.role == 'SEC':
+        return redirect('property:security_desk')
+    elif user.is_superuser:
+        return redirect('admin:index')
+    else:
+        messages.warning(request, "Account has no role assigned.")
+        return redirect('users:auth_login')
+
 # --- DASHBOARD VIEWS ---
 
 @login_required
