@@ -36,7 +36,7 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     messages.info(request, 'You have been successfully logged out.')
-    return redirect('users:auth_login')
+    return redirect('users:splash_page')
 
 # NOTE: We removed 'home_view' from here because we are using 
 # 'property.views.dashboard_redirect_view' as the main dispatcher now.
