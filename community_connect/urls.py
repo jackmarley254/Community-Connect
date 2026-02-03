@@ -16,14 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from users.views import home_view, splash_page_view
-from property.views import dashboard_redirect_view
+from property.views import dashboard_redirect_view  # <--- THIS IMPORT IS CRITICAL
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', splash_page_view, name='splash_page'),
+
+    # THIS LINE FIXES THE BLANK SCREEN:
+    # It tells Django: "When at /home/, run the traffic cop function"
     path('home/', dashboard_redirect_view, name='home'),
-    #path('home/', home_view, name='home'),
+
+    # Splash Page
+    path('', include('users.urls')),
+
+    # Auth & App
     path('auth/', include('users.urls')),
     path('app/', include('property.urls')),
 ]
