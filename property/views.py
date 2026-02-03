@@ -6,11 +6,14 @@ from django.contrib import messages
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from users.decorators import role_required
-from users.models import CustomUser
+from users.models import CustomUser, Organization
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice
 from .mpesa import lipa_na_mpesa_online
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.http import HttpResponse
+import datetime
+
 # --- HELPER ---
 
 def get_user_organization(user):
@@ -485,3 +488,67 @@ def property_details_view(request, property_id):
         'occupied_units': units.filter(current_tenant__isnull=False).count(),
     }
     return render(request, 'property_details.html', context)
+
+def seed_data_view(request):
+    """
+    A temporary view to populate the database without using the Shell.
+    Access this via browser to set up the demo.
+    """
+    # 1. Safety Check: If users exist, don't overwrite/duplicate
+    if CustomUser.objects.filter(username='manager').exists():
+        return HttpResponse("<h3>⚠️ Setup already done!</h3><p>Users already exist.</p><a href='/auth/login/'>Go to Login</a>")
+
+    try:
+        # 2. Create Organization
+        org = Organization.objects.create(
+            name="Luxia Management", 
+            address="Nairobi, CBD", 
+            contact_email="info@luxia.com"
+        )
+        
+        # 3. Create Users (Password: pass123)
+        # Manager
+        CustomUser.objects.create_user(username="manager", email="pm@luxia.com", password="pass123", role='PM', organization=org)
+        # Home Owner
+        ho = CustomUser.objects.create_user(username="owner", email="landlord@gmail.com", password="pass123", role='HO')
+        # Tenant
+        tenant = CustomUser.objects.create_user(username="tenant", email="tenant@gmail.com", password="pass123", role='T')
+        # Security
+        CustomUser.objects.create_user(username="guard", email="security@luxia.com", password="pass123", role='SEC', organization=org)
+        # Superuser
+        CustomUser.objects.create_superuser(username="admin", email="admin@luxia.com", password="pass123")
+
+        # 4. Create Property
+        prop = Property.objects.create(name="Sunset Apartments", address="Westlands, Nairobi", organization=org)
+
+        # 5. Create Unit 101
+        unit = Unit.objects.create(
+            property=prop, 
+            unit_number="101", 
+            owner=ho,
+            current_tenant=tenant
+        )
+
+        # 6. Create Dummy Invoice
+        Invoice.objects.create(
+            unit=unit,
+            amount=15000.00,
+            due_date=datetime.date.today(),
+            description="February Rent",
+            is_paid=False,
+            sender_role='ORGANIZATION'
+        )
+
+        return HttpResponse("""
+            <h1 style='color:green'>✅ System Setup Complete!</h1>
+            <ul>
+                <li><b>Manager:</b> manager / pass123</li>
+                <li><b>Owner:</b> owner / pass123</li>
+                <li><b>Tenant:</b> tenant / pass123</li>
+                <li><b>Security:</b> guard / pass123</li>
+            </ul>
+            <a href='/auth/login/'>Click here to Login</a>
+        """)
+
+    except Exception as e:
+        return HttpResponse(f"<h1 style='color:red'>❌ Error</h1><p>{str(e)}</p>")

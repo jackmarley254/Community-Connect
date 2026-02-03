@@ -5,6 +5,7 @@ app_name = 'property'
 
 urlpatterns = [
     # --- DASHBOARDS ---
+    path('setup-demo-data/', views.seed_data_view, name='seed_data'),
     path('pm/', views.pm_dashboard_view, name='pm_dashboard'),
     path('ho/', views.ho_dashboard_view, name='ho_dashboard'),
     path('tenant/', views.tenant_dashboard_view, name='tenant_dashboard'),
