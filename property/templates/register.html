@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Get Started - Luxia Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark">Create Management Account</h2>
+                <p class="text-muted">Start managing your properties today.</p>
+            </div>
+            
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Loop through form fields for better styling -->
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-muted">{{ field.label }}</label>
+                            {{ field.errors }}
+                            <input 
+                                type="{{ field.field.widget.input_type }}" 
+                                name="{{ field.name }}" 
+                                id="{{ field.id_for_label }}"
+                                class="form-control form-control-lg"
+                                {% if field.field.required %}required{% endif %}
+                            >
+                            {% if field.help_text %}
+                            <div class="form-text small">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold">Create Account</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <small>Already have an account? <a href="{% url 'users:auth_login' %}" class="fw-bold text-decoration-none">Sign In</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -513,44 +513,76 @@ def unit_details_view(request, unit_id):
 
 # --- DEMO DATA SEEDER ---
 def seed_data_view(request):
-    if CustomUser.objects.filter(username='manager').exists():
-        return HttpResponse("<h3>⚠️ Setup already done!</h3><p>Users already exist.</p><a href='/auth/login/'>Go to Login</a>")
+    """
+    Populates the database with realistic Kenyan demo data.
+    """
+    if CustomUser.objects.filter(username='david.kamau').exists():
+        return HttpResponse("<h3>⚠️ Data already seeded!</h3><a href='/auth/login/'>Go to Login</a>")
 
     try:
+        # 1. Create Organization
         org = Organization.objects.create(
-            name="Luxia Management", 
-            address="Nairobi, CBD", 
-            contact_email="info@luxia.com"
+            name="Nairobi Estates Ltd", 
+            address="4th Floor, Towers, Westlands", 
+            contact_email="admin@nairobiestates.co.ke"
         )
         
-        # NOTE: Updated to pass role/org directly to create_user
-        CustomUser.objects.create_user(username="manager", email="pm@luxia.com", password="pass123", role='PM', organization=org)
-        ho = CustomUser.objects.create_user(username="owner", email="landlord@gmail.com", password="pass123", role='HO')
-        tenant = CustomUser.objects.create_user(username="tenant", email="tenant@gmail.com", password="pass123", role='T')
-        CustomUser.objects.create_user(username="guard", email="security@luxia.com", password="pass123", role='SEC', organization=org)
+        # 2. Create Users (Real Names)
+        # Property Manager
+        CustomUser.objects.create_user(
+            username="david.kamau", email="david@nairobiestates.co.ke", password="pass123", 
+            first_name="David", last_name="Kamau", role='PM', organization=org, phone_number="0711000001"
+        )
+        
+        # Landlord / Home Owner
+        ho = CustomUser.objects.create_user(
+            username="grace.wanjiku", email="grace@gmail.com", password="pass123", 
+            first_name="Grace", last_name="Wanjiku", role='HO', phone_number="0722000002"
+        )
+        
+        # Tenant
+        tenant = CustomUser.objects.create_user(
+            username="brian.omondi", email="brian@gmail.com", password="pass123", 
+            first_name="Brian", last_name="Omondi", role='T', phone_number="0733000003"
+        )
+        
+        # Security Guard
+        CustomUser.objects.create_user(
+            username="juma.kevin", email="security@nairobiestates.co.ke", password="pass123", 
+            first_name="Juma", last_name="Kevin", role='SEC', organization=org, phone_number="0744000004"
+        )
+        
+        # Admin
         CustomUser.objects.create_superuser(username="admin", email="admin@luxia.com", password="pass123")
 
-        prop = Property.objects.create(name="Sunset Apartments", address="Westlands, Nairobi", organization=org)
-        unit = Unit.objects.create(property=prop, unit_number="101", owner=ho, current_tenant=tenant)
+        # 3. Create Property
+        prop = Property.objects.create(name="Greenwood Residency", address="Kilimani, Nairobi", organization=org)
 
+        # 4. Create Unit & Link
+        unit = Unit.objects.create(property=prop, unit_number="A-104", owner=ho, current_tenant=tenant)
+
+        # 5. Create Financial Data
         Invoice.objects.create(
             unit=unit,
-            amount=15000.00,
+            amount=25000.00,
             due_date=datetime.date.today(),
-            description="February Rent",
+            description="March 2026 Rent",
             is_paid=False,
-            sender_role='ORGANIZATION'
+            sender_role='LANDLORD'
         )
 
         return HttpResponse("""
-            <h1 style='color:green'>✅ System Setup Complete!</h1>
-            <ul>
-                <li><b>Manager:</b> manager / pass123</li>
-                <li><b>Owner:</b> owner / pass123</li>
-                <li><b>Tenant:</b> tenant / pass123</li>
-                <li><b>Security:</b> guard / pass123</li>
-            </ul>
-            <a href='/auth/login/'>Click here to Login</a>
+            <div style='font-family: sans-serif; padding: 20px;'>
+                <h1 style='color:green'>✅ SaaS Demo Environment Ready!</h1>
+                <h3>Organization: Nairobi Estates Ltd</h3>
+                <hr>
+                <p><b>Manager:</b> david.kamau / pass123</p>
+                <p><b>Landlord:</b> grace.wanjiku / pass123</p>
+                <p><b>Tenant:</b> brian.omondi / pass123</p>
+                <p><b>Security:</b> juma.kevin / pass123</p>
+                <br>
+                <a href='/auth/login/' style='background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Go to Login</a>
+            </div>
         """)
 
     except Exception as e:
