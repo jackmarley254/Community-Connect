@@ -1,20 +1,8 @@
 from django.db import models
 from django.conf import settings
+from users.models import Organization  # <--- IMPORTED FROM USERS APP
 
-# --- 1. Multi-Tenancy / Organization ---
-
-class Organization(models.Model):
-    name = models.CharField(max_length=150, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name_plural = "Organizations"
-
-
-# --- 2. Property Structure ---
+# --- 1. Property Structure ---
 
 class Property(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -24,7 +12,6 @@ class Property(models.Model):
     def __str__(self):
         return f"{self.name} ({self.organization.name})"
     
-    # --- HELPER METHODS FOR DASHBOARD ---
     @property
     def total_units_count(self):
         return self.unit_set.count()
@@ -48,16 +35,16 @@ class Unit(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     unit_number = models.CharField(max_length=10)
     
+    # Note: limit_choices_to now points to 'role', not 'userprofile__role'
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                              limit_choices_to={'userprofile__role': 'HO'}, 
+                              limit_choices_to={'role': 'HO'}, 
                               related_name='owned_units')
     
-    # NEW: Allow the owning organization to be tracked for company-owned units
-    organization_owner = models.ForeignKey('property.Organization', on_delete=models.SET_NULL, null=True, blank=True,
-                                            help_text="Used if the unit is owned directly by the management company/organization.")
+    organization_owner = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True,
+                                           help_text="Used if the unit is owned directly by the management company.")
     
     current_tenant = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                                          limit_choices_to={'userprofile__role': 'T'}, 
+                                          limit_choices_to={'role': 'T'}, 
                                           related_name='occupied_unit')
 
     def __str__(self):
@@ -66,33 +53,16 @@ class Unit(models.Model):
     class Meta:
         unique_together = ('property', 'unit_number')
 
-class Invoice(models.Model):
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='invoices')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    due_date = models.DateField()
-    is_paid = models.BooleanField(default=False)
-    description = models.CharField(max_length=200, default="Service Charge / Rent")
-    
-    # NEW: Track who created the invoice (Organization=Service Charge, HO=Rent/Other Fees)
-    sender_role = models.CharField(max_length=20, choices=[('ORGANIZATION', 'Organization'), ('LANDLORD', 'Landlord')], default='ORGANIZATION')
-    
-    # NEW: MPESA Tracking Fields
-    mpesa_code = models.CharField(max_length=20, blank=True, null=True)
-    payment_date = models.DateTimeField(null=True, blank=True)
-    
-    def __str__(self):
-        return f"Invoice #{self.id} - {self.unit.unit_number} - {self.amount}"
-
 class ParkingLot(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     lot_number = models.CharField(max_length=10)
     
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, 
-                              limit_choices_to={'userprofile__role': 'HO'}, 
+                              limit_choices_to={'role': 'HO'}, 
                               related_name='owned_parking_lots')
     
     current_tenant = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                                          limit_choices_to={'userprofile__role': 'T'}, 
+                                          limit_choices_to={'role': 'T'}, 
                                           related_name='assigned_parking_lot')
     
     def __str__(self):
@@ -104,11 +74,29 @@ class ParkingLot(models.Model):
         verbose_name_plural = "Parking Lots"
 
 
+# --- 2. Financial Management ---
+
+class Invoice(models.Model):
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='invoices')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    due_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    description = models.CharField(max_length=200, default="Monthly Service Charge")
+    
+    sender_role = models.CharField(max_length=20, choices=[('ORGANIZATION', 'Organization'), ('LANDLORD', 'Landlord')], default='ORGANIZATION')
+    
+    mpesa_code = models.CharField(max_length=50, null=True, blank=True)
+    payment_date = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Invoice #{self.id} - {self.unit.unit_number} - {self.amount}"
+
+
 # --- 3. Notification System ---
 
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
-                                  limit_choices_to={'userprofile__role': 'T'},
+                                  limit_choices_to={'role': 'T'},
                                   related_name='tenant_notifications')
     
     message = models.TextField(max_length=500)
@@ -122,7 +110,7 @@ class Notification(models.Model):
         return f"Alert for {self.recipient.username}"
 
 
-# --- 4. Complaint & Ticketing System (Pillar II) ---
+# --- 4. Complaint & Ticketing System ---
 
 class Ticket(models.Model):
     STATUS_CHOICES = (
@@ -138,7 +126,6 @@ class Ticket(models.Model):
         ('EMERGENCY', 'Emergency'),
     )
 
-    # Link to the specific unit raising the issue
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='tickets')
     submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
@@ -150,14 +137,13 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Optional: For tracking who is fixing it (e.g., "Technician Assigned")
     assigned_to = models.CharField(max_length=100, blank=True, null=True, help_text="Name of technician or staff assigned.")
 
     def __str__(self):
         return f"#{self.id} - {self.title} ({self.get_status_display()})"
 
 
-# --- 5. Digital Notice Board (Pillar II) ---
+# --- 5. Digital Notice Board ---
 
 class Announcement(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='announcements')
@@ -169,18 +155,3 @@ class Announcement(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.property.name}"
-
-
-# --- 6. Financial Management (Pillar I - Basic Structure) ---
-
-class Invoice(models.Model):
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='invoices')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    due_date = models.DateField()
-    is_paid = models.BooleanField(default=False)
-    description = models.CharField(max_length=200, default="Monthly Service Charge")
-    payment_date = models.DateTimeField(null=True, blank=True)
-    mpesa_code = models.CharField(max_length=50, null=True, blank=True)
-    
-    def __str__(self):
-        return f"Invoice #{self.id} - {self.unit.unit_number} - {self.amount}"

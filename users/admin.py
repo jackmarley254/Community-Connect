@@ -1,31 +1,35 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, UserProfile
+from .models import CustomUser, Organization
 
-class UserProfileInline(admin.StackedInline):
-    """
-    Allows editing the UserProfile (Role/Organization) directly inside the User edit page.
-    """
-    model = UserProfile
-    can_delete = False
-    verbose_name_plural = 'User Profile'
+# We no longer need UserProfileInline because the fields are now directly on the User model.
 
 class CustomUserAdmin(UserAdmin):
     """
     Custom Admin for the CustomUser model.
     """
-    inlines = (UserProfileInline, )
-    # Add phone_number to the list display and fieldsets if needed
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'get_role')
+    model = CustomUser
     
-    def get_role(self, obj):
-        try:
-            return obj.userprofile.get_role_display()
-        except:
-            return "-"
-    get_role.short_description = 'Role'
+    # 1. Columns to show in the list view
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'organization', 'is_staff')
+    
+    # 2. Filters on the right sidebar
+    list_filter = ('role', 'organization', 'is_staff', 'is_active')
+    
+    # 3. Fields to show when EDITING a user
+    # We append our custom fields to the default Django User fields
+    fieldsets = UserAdmin.fieldsets + (
+        ('Luxia Connect Info', {'fields': ('role', 'organization', 'phone_number')}),
+    )
+    
+    # 4. Fields to show when CREATING a user
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Luxia Connect Info', {'fields': ('role', 'organization', 'phone_number')}),
+    )
+
+    search_fields = ('username', 'email', 'organization__name')
+    ordering = ('username',)
 
 # Register the models
 admin.site.register(CustomUser, CustomUserAdmin)
-# You can also register UserProfile separately if you prefer
-admin.site.register(UserProfile)
+admin.site.register(Organization)

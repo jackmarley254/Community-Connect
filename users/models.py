@@ -1,39 +1,41 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# NOTE: Do NOT import property here. We use a string reference below.
+class Organization(models.Model):
+    """
+    Represents a Property Management Company (e.g., Luxia Management).
+    Moved here to prevent circular dependencies.
+    """
+    name = models.CharField(max_length=255)
+    address = models.TextField(blank=True)
+    contact_email = models.EmailField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 class CustomUser(AbstractUser):
     """
-    Custom User Model extending Django's built-in User.
+    Unified User Model.
+    Includes Role and Organization directly to avoid complex joins.
     """
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-
-    def __str__(self):
-        return self.username
-
-class UserProfile(models.Model):
-    """
-    Holds role-specific data and links the user to their organization.
-    """
-    ROLE_CHOICES = (
+    ROLE_CHOICES = [
         ('PM', 'Property Manager'),
         ('HO', 'Home Owner/Landlord'),
         ('T', 'Tenant'),
-        ('SD', 'Security Desk'),
+        ('SEC', 'Security Desk'),
+    ]
+    
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='T')
+    
+    # Link directly to the local Organization model
+    organization = models.ForeignKey(
+        Organization, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='members'
     )
-    
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='userprofile')
-    
-    # User's primary role
-    role = models.CharField(max_length=2, choices=ROLE_CHOICES, default='T')
-    
-    # FIX IS HERE: We use the string 'property.Organization' (WITH QUOTES)
-    organization = models.ForeignKey('property.Organization', on_delete=models.SET_NULL, null=True, blank=True,
-                                     help_text="The organization this user belongs to.")
-    
+
     def __str__(self):
-        return f"{self.user.username} - {self.get_role_display()}"
-    
-    class Meta:
-        verbose_name_plural = "User Profiles"
+        return f"{self.username} ({self.get_role_display()})"
