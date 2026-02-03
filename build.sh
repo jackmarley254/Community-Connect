@@ -2,32 +2,20 @@
 # Exit on error
 set -o errexit
 
-echo "------ DEBUG: FILE STRUCTURE START ------"
-# List all files in the current directory
-ls -la
-
-# Check if the community_connect folder exists
-if [ -d "community_connect" ]; then
-    echo "Directory 'community_connect' found."
-    ls -la community_connect/
-else
-    echo "ERROR: Directory 'community_connect' NOT found!"
-fi
-echo "------ DEBUG: FILE STRUCTURE END ------"
-
-# Install Python dependencies
+# 1. Install Dependencies
 pip install -r requirements.txt
 
-# Collect static files
+# 2. Collect Static Files (CSS/JS)
 python manage.py collectstatic --no-input
 
-# Run database migrations
+# 3. Run Database Migrations
 python manage.py migrate
 ```
 
-### Step 2: Push this to GitHub
+### Step 2: Push the Fix (From your Terminal)
+Now, run the git commands **in your terminal** (not in the file) to save this correction.
 
 ```bash
-git add build.sh
-git commit -m "Add debugging to build script"
-git push
+##git add build.sh
+##git commit -m "Remove git commands from build script"
+##git push
