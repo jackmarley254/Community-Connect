@@ -10,4 +10,3 @@ python manage.py collectstatic --no-input
 
 # 3. Run Database Migrations
 python manage.py migrate
-```
