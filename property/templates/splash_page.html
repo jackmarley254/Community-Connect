@@ -4,218 +4,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Connect | Property Management</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Community Connect | #1 Property Management Software in Kenya</title>
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- Custom Theme CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <style>
-        /* Splash Specific Overrides to match the 2-Color Theme */
-        .hero-section {
-            padding: 6rem 0;
-            background-color: var(--primary); /* Deep Navy Background */
-            color: var(--secondary); /* White Text */
+        :root {
+            --primary: #0f172a; /* Deep Navy */
+            --accent: #2563eb; /* Royal Blue */
+            --light: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #334155;
         }
         
+        /* Navbar */
+        .navbar {
+            background-color: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 8rem 0 6rem;
+            position: relative;
+            overflow: hidden;
+        }
         .hero-title {
             font-size: 3.5rem;
             font-weight: 800;
-            letter-spacing: -1px;
-            color: white;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
         }
-        
         .hero-subtitle {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
+            color: #94a3b8;
             font-weight: 300;
-            color: #cbd5e1; /* Light Slate for subtitle */
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
-        .btn-splash-primary {
-            background-color: white;
-            color: var(--primary);
+        /* Buttons */
+        .btn-cta {
+            background-color: var(--accent);
+            color: white;
+            padding: 1rem 2.5rem;
             font-weight: 700;
-            padding: 0.75rem 2rem;
-            border: 2px solid white;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s ease;
         }
-
-        .btn-splash-primary:hover {
-            background-color: transparent;
+        .btn-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
             color: white;
         }
-
-        .btn-splash-outline {
-            background-color: transparent;
+        .btn-outline-light-custom {
+            border: 2px solid rgba(255,255,255,0.2);
             color: white;
-            border: 2px solid #cbd5e1;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
             font-weight: 600;
-            padding: 0.75rem 2rem;
         }
-
-        .btn-splash-outline:hover {
-            border-color: white;
-            background-color: rgba(255,255,255,0.1);
-            color: white;
-        }
-
-        /* Role Cards - Clean White look */
-        .role-card {
-            border: 1px solid var(--border-color);
+        .btn-outline-light-custom:hover {
             background: white;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            padding: 2rem;
-            border-radius: 8px;
-        }
-
-        .role-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-            border-color: var(--primary);
-        }
-
-        .role-icon {
             color: var(--primary);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: white;
+            margin-top: -3rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 10;
+            padding: 2rem;
+        }
+        .stat-item h3 {
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0;
+        }
+        .stat-item p {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0;
+        }
+
+        /* Features */
+        .feature-card {
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
             margin-bottom: 1.5rem;
         }
 
-        /* Carousel specific */
-        .carousel-item img {
-            border-radius: 8px;
-            max-height: 500px;
-            object-fit: cover;
-            filter: brightness(0.9); /* Slightly darken images to make text pop */
+        /* Pricing */
+        .pricing-card {
+            border: none;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .pricing-card.featured {
+            border: 2px solid var(--accent);
+        }
+        .pricing-badge {
+            background: var(--accent);
+            color: white;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        
+        .check-list li {
+            margin-bottom: 10px;
+            color: #475569;
+        }
+        .check-list i {
+            color: #10b981; /* Green */
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Transparent Navbar for Splash -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--secondary);">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'users:splash_page' %}">
-                <i class="fas fa-building me-2"></i>Community Connect
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-building me-2 text-primary bg-white rounded p-1" style="font-size: 1rem;"></i>Community Connect
             </a>
-            <div class="ms-auto">
-                <a href="{% url 'users:auth_login' %}" class="btn btn-sm btn-outline-dark fw-bold px-4">Sign In</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <a href="{% url 'users:auth_login' %}" class="btn btn-outline-light btn-sm px-4 rounded-pill">Client Login</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'users:auth_register' %}" class="btn btn-primary btn-sm px-4 rounded-pill fw-bold">Get Started</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <!-- 1. HERO SECTION (Deep Navy & White) -->
-    <header class="hero-section text-center">
-        <div class="container">
-            <h1 class="hero-title mb-3">Property Management.<br>Simplified.</h1>
-            <p class="hero-subtitle mx-auto" style="max-width: 700px;">
-                A unified platform for automated invoicing, real-time security alerts, and seamless resident communication.
-            </p>
-            
-            <div class="d-flex justify-content-center gap-3">
-                <a href="{% url 'users:auth_register' %}" class="btn btn-splash-primary shadow-lg">Get started</a>
-                <a href="#features" class="btn btn-splash-outline">Explore Features</a>
-            </div>
-        </div>
-    </header>
-
-    <!-- 2. CAROUSEL SECTION (Visual Showcase) -->
-    <section class="py-5 bg-light-custom border-bottom">
+    <!-- Hero Section -->
+    <section class="hero-section text-center">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10">
-                    <div id="heroCarousel" class="carousel slide shadow-lg rounded-3 overflow-hidden" data-bs-ride="carousel">
-                        <div class="carousel-indicators">
-                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-                        </div>
-                        <div class="carousel-inner">
-                            <!-- Dashboard Slide -->
-                            <div class="carousel-item active">
-                                <img src="https://placehold.co/1200x600/1e293b/ffffff?text=Unified+Dashboard+View" class="d-block w-100" alt="Dashboard">
-                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded p-3">
-                                    <h5 class="fw-bold">Real-time Financial Insight</h5>
-                                    <p class="mb-0">Track payments, occupancy, and maintenance requests instantly.</p>
-                                </div>
-                            </div>
-                            <!-- Security Slide -->
-                            <div class="carousel-item">
-                                <img src="https://placehold.co/1200x600/334155/ffffff?text=Security+Alert+Integration" class="d-block w-100" alt="Security">
-                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded p-3">
-                                    <h5 class="fw-bold">Instant Security Alerts</h5>
-                                    <p class="mb-0">Notify residents of visitors and deliveries in seconds.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon"></span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon"></span>
-                        </button>
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-2 mb-4 fw-bold">
+                        🚀 #1 Rental Management System in Kenya
+                    </span>
+                    <h1 class="hero-title">Automate Rent Collection.<br>Eliminate Headaches.</h1>
+                    <p class="hero-subtitle mx-auto" style="max-width: 700px;">
+                        Stop chasing tenants. Luxia Connect handles invoicing, M-Pesa reconciliation, security logs, and tenant communication on autopilot.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3 mb-5">
+                        <a href="{% url 'users:auth_register' %}" class="btn btn-cta">Create Free Account</a>
+                        <a href="#demo" class="btn btn-outline-light-custom">View Demo</a>
                     </div>
+                    
+                    <!-- Dashboard Preview Image -->
+                    <img src="https://placehold.co/1000x500/1e293b/ffffff?text=Luxia+Dashboard+Preview" class="img-fluid rounded-4 shadow-lg border border-secondary" alt="Dashboard">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 3. ROLE CARDS (Clean Grid) -->
-    <section id="features" class="py-5 bg-white">
+    <!-- Stats Bar -->
+    <div class="container">
+        <div class="stats-bar">
+            <div class="row text-center">
+                <div class="col-md-3 border-end">
+                    <div class="stat-item">
+                        <h3>KES 1.2B+</h3>
+                        <p>Rent Processed</p>
+                    </div>
+                </div>
+                <div class="col-md-3 border-end">
+                    <div class="stat-item">
+                        <h3>500+</h3>
+                        <p>Landlords Onboarded</p>
+                    </div>
+                </div>
+                <div class="col-md-3 border-end">
+                    <div class="stat-item">
+                        <h3>99.9%</h3>
+                        <p>Uptime Guarantee</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <h3>24/7</h3>
+                        <p>Local Support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 mt-5">
         <div class="container">
             <div class="text-center mb-5">
-                <h6 class="text-uppercase text-muted fw-bold ls-1">Ecosystem</h6>
-                <h2 class="fw-bold">Built for Every Stakeholder</h2>
+                <h6 class="text-uppercase text-primary fw-bold">Why Choose Community Connect?</h6>
+                <h2 class="fw-bold display-6">Complete Control at Your Fingertips</h2>
             </div>
-            
+
             <div class="row g-4">
-                
-                <!-- Property Manager -->
-                <div class="col-md-3">
-                    <div class="role-card text-center">
-                        <i class="fas fa-chart-line fa-3x role-icon"></i>
-                        <h5 class="fw-bold mb-3">Managers</h5>
-                        <p class="text-muted small">Automated billing, bulk unit creation, and occupancy tracking.</p>
+                <!-- Feature 1 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <h4>M-Pesa Integration</h4>
+                        <p class="text-muted">Tenants pay directly via STK Push. Payments are instantly reconciled to the specific unit and invoice. No manual data entry.</p>
                     </div>
                 </div>
-
-                <!-- Home Owner -->
-                <div class="col-md-3">
-                    <div class="role-card text-center">
-                        <i class="fas fa-file-invoice-dollar fa-3x role-icon"></i>
-                        <h5 class="fw-bold mb-3">Owners</h5>
-                        <p class="text-muted small">Transparency on invoices, unit assets, and parking assignments.</p>
+                <!-- Feature 2 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-file-invoice"></i></div>
+                        <h4>Automated Invoicing</h4>
+                        <p class="text-muted">Set it and forget it. Rent and service charge invoices are generated and sent to tenants automatically every month.</p>
                     </div>
                 </div>
-
-                <!-- Tenant -->
-                <div class="col-md-3">
-                    <div class="role-card text-center">
-                        <i class="fas fa-mobile-alt fa-3x role-icon"></i>
-                        <h5 class="fw-bold mb-3">Tenants</h5>
-                        <p class="text-muted small">Instant alerts, easy maintenance ticketing, and digital payments.</p>
+                <!-- Feature 3 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h4>Digital Security Desk</h4>
+                        <p class="text-muted">Replace the logbook. Guards use a digital tablet to log visitors, capturing IDs and notifying tenants instantly.</p>
                     </div>
                 </div>
-
-                <!-- Security -->
-                <div class="col-md-3">
-                    <div class="role-card text-center">
-                        <i class="fas fa-shield-alt fa-3x role-icon"></i>
-                        <h5 class="fw-bold mb-3">Security</h5>
-                        <p class="text-muted small">Rapid visitor logging and package notification system.</p>
+                <!-- Feature 4 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-tools"></i></div>
+                        <h4>Maintenance Tracking</h4>
+                        <p class="text-muted">Tenants report issues via the app. You assign them to technicians and track resolution status in real-time.</p>
                     </div>
                 </div>
-
+                <!-- Feature 5 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                        <h4>Financial Reports</h4>
+                        <p class="text-muted">Generate income statements, occupancy reports, and arrears lists with one click. Export to Excel or PDF.</p>
+                    </div>
+                </div>
+                <!-- Feature 6 -->
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-users"></i></div>
+                        <h4>Multi-User Access</h4>
+                        <p class="text-muted">Give dedicated portals to your Landlords, Tenants, and Security guards. Everyone sees only what they need.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
-    
-    <footer class="py-4" style="background-color: var(--primary); color: #94a3b8;">
-        <div class="container text-center">
-            <small>&copy; 2026 Community Connect Platform. All rights reserved.</small>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Simple, Transparent Pricing</h2>
+                <p class="text-muted">Start for free, scale as you grow.</p>
+            </div>
+
+            <div class="row justify-content-center g-4">
+                <!-- Standard Plan -->
+                <div class="col-lg-4">
+                    <div class="pricing-card featured">
+                        <span class="pricing-badge">MOST POPULAR</span>
+                        <h4 class="fw-bold text-dark">Professional</h4>
+                        <div class="display-4 fw-bold my-3 text-primary">KES 150<span class="fs-5 text-muted">/unit</span></div>
+                        <p class="text-muted mb-4">Everything you need to manage residential estates.</p>
+                        
+                        <ul class="list-unstyled check-list">
+                            <li><i class="fas fa-check-circle"></i> Unlimited Properties</li>
+                            <li><i class="fas fa-check-circle"></i> M-Pesa Integration</li>
+                            <li><i class="fas fa-check-circle"></i> Tenant & Landlord Portals</li>
+                            <li><i class="fas fa-check-circle"></i> Security Desk Module</li>
+                            <li><i class="fas fa-check-circle"></i> 24/7 Support</li>
+                        </ul>
+
+                        <div class="d-grid mt-4">
+                            <a href="{% url 'users:auth_register' %}" class="btn btn-primary btn-lg rounded-pill">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-5 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="fw-bold mb-3">Commnity Connect</h5>
+                    <p class="text-secondary">Revolutionizing property management in Africa through technology and automation.</p>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h6 class="fw-bold mb-3">Product</h6>
+                    <ul class="list-unstyled text-secondary">
+                        <li><a href="#" class="text-decoration-none text-secondary">Features</a></li>
+                        <li><a href="#" class="text-decoration-none text-secondary">Pricing</a></li>
+                        <li><a href="#" class="text-decoration-none text-secondary">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h6 class="fw-bold mb-3">Company</h6>
+                    <ul class="list-unstyled text-secondary">
+                        <li><a href="#" class="text-decoration-none text-secondary">About Us</a></li>
+                        <li><a href="#" class="text-decoration-none text-secondary">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3">Contact Us</h6>
+                    <p class="text-secondary"><i class="fas fa-envelope me-2"></i> info@communityconnect.ke</p>
+                    <p class="text-secondary"><i class="fas fa-phone me-2"></i> +254 700 000 000</p>
+                </div>
+            </div>
+            <hr class="border-secondary mt-4">
+            <div class="text-center text-secondary small">
+                &copy; 2026 Commnity Connect Systems. All rights reserved.
+            </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
