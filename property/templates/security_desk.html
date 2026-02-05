@@ -1,101 +1,148 @@
 {% extends "base.html" %}
 
-{% block title %}Security Desk - {{ organization_name }}{% endblock %}
+{% block title %}Security Desk{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card p-4">
-            <h2 class="card-title text-center text-dark mb-4"><i class="fas fa-clipboard-list me-2"></i>Log Delivery / Visitor</h2>
-            <p class="text-center text-muted">Use this form to send instant alerts to tenants in {{ organization_name }} properties.</p>
-            
-            <form id="notificationForm" method="POST">
-                {% csrf_token %} 
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark"><i class="fas fa-shield-alt text-primary me-2"></i>Security Desk</h2>
+            <p class="text-muted mb-0">{{ organization_name }}</p>
+        </div>
+        <div>
+            <span class="badge bg-success fs-6">Guard: {{ user.username }}</span>
+        </div>
+    </div>
 
-                <div class="mb-3">
-                    <label for="unit_number" class="form-label fw-bold">Unit/Apt Number</label>
-                    <input type="text" class="form-control form-control-lg" id="unit_number" name="unit_number" placeholder="e.g., 3B, 101" required>
+    <!-- Quick Actions Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <a href="{% url 'property:rental_checkin' %}" class="btn btn-outline-primary w-100 py-3 fw-bold">
+                <i class="fas fa-bed me-2"></i> Airbnb Guest Check-In
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'property:rental_checkout_list' %}" class="btn btn-outline-danger w-100 py-3 fw-bold">
+                <i class="fas fa-sign-out-alt me-2"></i> Airbnb Guest Check-Out
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT: VISITOR LOGGING FORM -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-clock me-2"></i>Log Entry</h5>
                 </div>
+                <div class="card-body">
+                    <form action="{% url 'property:log_visitor' %}" method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Unit Number</label>
+                            <input type="text" name="unit_number" class="form-control" placeholder="e.g. A-104" required>
+                        </div>
 
-                <div class="mb-4">
-                    <label for="message" class="form-label fw-bold">Message / Details</label>
-                    <textarea class="form-control" id="message" name="message" rows="5" placeholder="e.g., Amazon delivery left at front desk, Visitor (John Doe) requesting access." required></textarea>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Visitor Name</label>
+                                <input type="text" name="visitor_name" class="form-control" placeholder="John Doe" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Type</label>
+                                <select name="visitor_type" class="form-select">
+                                    <option value="DELIVERY">Delivery</option>
+                                    <option value="SERVICE">Cleaner/Worker</option>
+                                    <option value="SOCIAL">Social Visit</option>
+                                    <option value="TAXI">Taxi</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">ID Number</label>
+                            <input type="text" name="visitor_id" class="form-control" placeholder="National ID / Passport" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Phone Number</label>
+                            <input type="text" name="visitor_phone" class="form-control" placeholder="07XX..." required>
+                        </div>
+
+                        <div class="form-check mb-4 bg-light p-2 rounded border">
+                            <input class="form-check-input ms-1" type="checkbox" name="id_collected" id="idCheck">
+                            <label class="form-check-label fw-bold ms-2 text-danger" for="idCheck">
+                                ID Card Collected?
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="ALLOW" class="btn btn-success fw-bold">
+                                <i class="fas fa-check me-2"></i> Allow Entry (Go Up)
+                            </button>
+                            <button type="submit" name="action" value="WAIT" class="btn btn-warning fw-bold text-dark">
+                                <i class="fas fa-hand-paper me-2"></i> Wait at Gate
+                            </button>
+                        </div>
+                    </form>
                 </div>
+            </div>
+        </div>
 
-                <button type="submit" class="btn btn-success btn-lg w-100 py-2">
-                    <i class="fas fa-paper-plane me-2"></i> Send Instant Alert
-                </button>
-            </form>
-
-            <!-- Feedback Message Container -->
-            <div id="feedbackMessage" class="mt-4" role="alert" style="display: none;"></div>
-
+        <!-- RIGHT: ACTIVE VISITORS LIST -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-success">Inside Now</h5>
+                    <span class="badge bg-success rounded-pill">{{ active_visitors.count }} Active</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-3">Visitor</th>
+                                <th>Unit</th>
+                                <th>Time In</th>
+                                <th>ID Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in active_visitors %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">{{ v.visitor_name }}</div>
+                                    <small class="text-muted">{{ v.visitor_type }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ v.unit.unit_number }}</span></td>
+                                <td class="small text-muted">{{ v.entry_time|date:"H:i" }}</td>
+                                <td>
+                                    {% if v.id_collected_at_gate %}
+                                        <span class="badge bg-danger">ID Kept</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">With Visitor</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'property:exit_visitor' v.id %}" class="btn btn-sm btn-outline-dark fw-bold" onclick="return confirm('Confirm visitor exit? Return ID if collected.')">
+                                        Exit
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-check-circle fa-2x mb-2 opacity-25"></i><br>
+                                    All clear. No visitors inside.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<script>
-    // API URL for submission
-    const NOTIFY_API_URL = "{% url 'property:security_desk_notify_api' %}"; 
-    
-    // Function to get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.startsWith(name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
-
-
-    document.getElementById('notificationForm').addEventListener('submit', async function(e) {
-        e.preventDefault(); 
-
-        const form = e.target;
-        const formData = new FormData(form);
-        const feedbackDiv = document.getElementById('feedbackMessage');
-        
-        // Show loading state
-        feedbackDiv.className = 'alert alert-info';
-        feedbackDiv.textContent = 'Sending notification...';
-        feedbackDiv.style.display = 'block';
-
-        try {
-            // Use Fetch API to send the data asynchronously (NO full page reload)
-            const response = await fetch(NOTIFY_API_URL, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken, 
-                },
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.status === 'success') {
-                feedbackDiv.textContent = result.message;
-                feedbackDiv.className = 'alert alert-success mt-4';
-                form.reset(); // Clear form on success
-            } else {
-                const errorMsg = result.message || 'Failed to send notification. Check unit number and tenant status.';
-                feedbackDiv.textContent = errorMsg;
-                feedbackDiv.className = 'alert alert-danger mt-4';
-            }
-
-        } catch (error) {
-            console.error('Network or server error:', error);
-            feedbackDiv.textContent = 'A critical error occurred. Check network connection.';
-            feedbackDiv.className = 'alert alert-danger mt-4';
-        }
-    });
-
-</script>
-{% endblock content %}
+{% endblock %}

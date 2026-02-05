@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Process Checkout</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold">{{ stay.unit.unit_number }}</h2>
+                        <p class="text-muted mb-0">Guest: {{ stay.guest_name }}</p>
+                        <small>Checked in: {{ stay.check_in_time|timesince }} ago</small>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Guest Experience Rating</label>
+                            {{ form.feedback_rating }}
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Feedback / Remarks</label>
+                            {{ form.feedback_comment }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg">Confirm Checkout</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

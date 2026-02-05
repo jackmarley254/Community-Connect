@@ -162,3 +162,7 @@ DARAJA_CONSUMER_SECRET = config('DARAJA_CONSUMER_SECRET', default='')
 DARAJA_BUSINESS_SHORTCODE = config('DARAJA_BUSINESS_SHORTCODE', default='174379') 
 DARAJA_PASSKEY = config('DARAJA_PASSKEY', default='bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
 DARAJA_CALLBACK_URL = config('DARAJA_CALLBACK_URL', default='http://localhost:8000/api/mpesa/callback/')
+
+# Media files (User uploaded content like ID cards)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

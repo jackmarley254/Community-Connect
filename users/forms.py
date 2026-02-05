@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from .models import CustomUser, Organization
+from .models import CustomUser, Organization, SupportMessage
 
 class LoginForm(AuthenticationForm):
     """
@@ -16,10 +16,7 @@ class LoginForm(AuthenticationForm):
     }))
 
 class ManagerSignUpForm(UserCreationForm):
-    """
-    SaaS Registration Form.
-    Creates a User (PM) AND an Organization simultaneously.
-    """
+    """Sign up form for new SaaS Tenants (Property Managers)"""
     email = forms.EmailField(required=True)
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
@@ -30,17 +27,37 @@ class ManagerSignUpForm(UserCreationForm):
         fields = ('username', 'email', 'first_name', 'last_name', 'company_name')
 
     def save(self, commit=True):
-        # 1. Save the User first (but don't commit to DB yet if possible, though UserCreationForm usually does)
         user = super().save(commit=False)
         user.role = 'PM'  # Force role to Property Manager
         
         if commit:
-            # 2. Create the Organization
             company_name = self.cleaned_data['company_name']
+            # Create the Organization automatically
             org = Organization.objects.create(name=company_name)
-            
-            # 3. Link User to Organization
             user.organization = org
             user.save()
             
         return user
+
+class CreateUserForm(UserCreationForm):
+    """Form for PMs to add Landlords/Tenants/Staff manually"""
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'first_name', 'last_name', 'email', 'phone_number', 'role')
+        widgets = {
+            'role': forms.Select(attrs={'class': 'form-select'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class SupportMessageForm(forms.ModelForm):
+    """Form for sending messages to Super Admin"""
+    class Meta:
+        model = SupportMessage
+        fields = ['message']
+        widgets = {
+            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Type your message to Support...'})
+        }

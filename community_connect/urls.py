@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from property.views import dashboard_redirect_view
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,3 +16,7 @@ urlpatterns = [
     path('auth/', include('users.urls')),
     path('app/', include('property.urls')),
 ]
+
+# Allow serving uploaded ID photos during development/demo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

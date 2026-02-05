@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold text-dark mb-4">Platform Overview</h2>
+
+    <!-- SaaS High Level Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h6 class="text-white-50">Total Organizations</h6>
+                    <h2 class="fw-bold">{{ total_orgs }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <h6 class="text-white-50">Total Revenue (Platform)</h6>
+                    <h2 class="fw-bold">KES {{ total_revenue|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <h6 class="text-white-50">Active Landlords</h6>
+                    <h2 class="fw-bold">{{ total_landlords }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <h6 class="text-white-50">Managed Properties</h6>
+                    <h2 class="fw-bold">{{ active_properties }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Organization List -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold mb-0">Registered Companies</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-3">Company Name</th>
+                                <th>Email</th>
+                                <th>Staff Count</th>
+                                <th>Date Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for org in organizations %}
+                            <tr>
+                                <td class="ps-3 fw-bold">{{ org.name }}</td>
+                                <td>{{ org.contact_email }}</td>
+                                <td><span class="badge bg-secondary">{{ org.user_count }}</span></td>
+                                <td class="small text-muted">{{ org.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-4">No organizations yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Inbox -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold mb-0">Support Inbox</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for msg in messages %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small">{{ msg.sender.username }}</strong>
+                            <small class="text-muted" style="font-size:0.7rem">{{ msg.created_at|timesince }} ago</small>
+                        </div>
+                        <div class="small text-muted mb-1">{{ msg.sender.organization.name }}</div>
+                        <p class="mb-0 small">{{ msg.message }}</p>
+                    </div>
+                    {% empty %}
+                    <div class="p-3 text-center text-muted">No messages.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
