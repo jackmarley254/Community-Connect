@@ -44,14 +44,6 @@ class CustomUser(AbstractUser):
     
     # NEW: Link Staff (Guard/Caretaker) to a specific property
     # We use a string reference 'property.Property' to avoid circular imports
-    assigned_property = models.ForeignKey(
-        'property.Property',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='assigned_staff',
-        help_text="For Staff: Which specific property do they work at?"
-    )
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
