@@ -166,3 +166,5 @@ DARAJA_CALLBACK_URL = config('DARAJA_CALLBACK_URL', default='http://localhost:80
 # Media files (User uploaded content like ID cards)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Force deployment update v1
