@@ -9,7 +9,8 @@ from django.db.models import Sum, Count, Q
 import json
 import datetime
 from .models import PaymentConfiguration, Invoice
-from .mpesa import lipa_na_mpesa_online 
+from .mpesa import lipa_na_mpesa_online
+from django.db.models.functions import TruncMonth
 
 # --- CUSTOM IMPORTS ---
 from users.decorators import role_required
@@ -681,45 +682,59 @@ def log_expense_view(request):
 @role_required(['PM'])
 def financial_report_view(request):
     """
-    The 'One-Click Report' Dashboard.
-    Aggregates Income vs Expenses.
+    The 'Provisional Accounts' Dashboard.
+    Mimics the Excel structure: Income vs Expenses.
     """
     org = get_user_organization(request.user)
     
-    # Date Filter (Default: Current Month)
+    # 1. Date Filtering
     today = timezone.now()
-    month = int(request.GET.get('month', today.month))
     year = int(request.GET.get('year', today.year))
     
-    # 1. Income (Paid Invoices)
-    income_qs = Invoice.objects.filter(
+    # 2. INCOME (Invoices Paid)
+    # We group by month to show trends (Jan, Feb, Mar...)
+    income_data = Invoice.objects.filter(
         unit__property__organization=org,
         is_paid=True,
-        payment_date__month=month,
         payment_date__year=year
-    )
-    total_income = income_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    ).annotate(month=TruncMonth('payment_date')).values('month').annotate(total=Sum('amount')).order_by('month')
     
-    # 2. Expenses
-    expense_qs = Expense.objects.filter(
+    # Total Income for the year
+    total_income_ytd = Invoice.objects.filter(
+        unit__property__organization=org,
+        is_paid=True,
+        payment_date__year=year
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # 3. EXPENSES (Money Out)
+    expense_data = Expense.objects.filter(
         property__organization=org,
-        date_incurred__month=month,
         date_incurred__year=year
-    )
-    total_expense = expense_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    ).annotate(month=TruncMonth('date_incurred')).values('month').annotate(total=Sum('amount')).order_by('month')
     
-    # 3. Net
-    net_profit = total_income - total_expense
+    # Total Expense for the year
+    total_expense_ytd = Expense.objects.filter(
+        property__organization=org,
+        date_incurred__year=year
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
     
-    # 4. Breakdown
-    expenses_by_cat = expense_qs.values('category__name').annotate(total=Sum('amount'))
+    # 4. Expense Breakdown by Category (for the Pie Chart/Table)
+    # e.g., Utilities, Staff, Maintenance
+    category_breakdown = Expense.objects.filter(
+        property__organization=org,
+        date_incurred__year=year
+    ).values('category__name').annotate(total=Sum('amount')).order_by('-total')
+
+    # 5. Net Position
+    net_balance = total_income_ytd - total_expense_ytd
     
     context = {
-        'total_income': total_income,
-        'total_expense': total_expense,
-        'net_profit': net_profit,
-        'expenses_breakdown': expenses_by_cat,
-        'month': month, 'year': year,
-        'recent_expenses': expense_qs.order_by('-date_incurred')[:10]
+        'year': year,
+        'total_income': total_income_ytd,
+        'total_expense': total_expense_ytd,
+        'net_balance': net_balance,
+        'income_trend': income_data,
+        'expense_trend': expense_data,
+        'category_breakdown': category_breakdown,
     }
     return render(request, 'finance_dashboard.html', context)

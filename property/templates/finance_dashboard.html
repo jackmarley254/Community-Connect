@@ -1,83 +1,91 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Financial Report{% endblock %}
+
+{% block title %}Financial Report {{ year }}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark">Financial Overview</h2>
+        <div>
+            <h2 class="fw-bold text-dark">Statement of Accounts</h2>
+            <p class="text-muted mb-0">Fiscal Year: {{ year }}</p>
+        </div>
         <div>
             <a href="{% url 'property:log_expense' %}" class="btn btn-danger me-2"><i class="fas fa-minus-circle me-2"></i>Log Expense</a>
-            <button class="btn btn-outline-dark" onclick="window.print()"><i class="fas fa-print me-2"></i>Print Report</button>
+            <button onclick="window.print()" class="btn btn-dark"><i class="fas fa-print me-2"></i>Export PDF</button>
         </div>
     </div>
 
-    <!-- P&L Cards -->
+    <!-- Summary Cards -->
     <div class="row g-4 mb-5">
         <div class="col-md-4">
-            <div class="card bg-success text-white h-100">
+            <div class="card border-0 shadow-sm bg-success bg-opacity-10">
                 <div class="card-body text-center">
-                    <h6>Total Income</h6>
-                    <h2 class="fw-bold">KES {{ total_income|intcomma }}</h2>
+                    <h6 class="text-success text-uppercase fw-bold">Total Income</h6>
+                    <h2 class="fw-bold text-dark">KES {{ total_income|intcomma }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card bg-danger text-white h-100">
+            <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
                 <div class="card-body text-center">
-                    <h6>Total Expenses</h6>
-                    <h2 class="fw-bold">KES {{ total_expense|intcomma }}</h2>
+                    <h6 class="text-danger text-uppercase fw-bold">Total Expenditure</h6>
+                    <h2 class="fw-bold text-dark">KES {{ total_expense|intcomma }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card {% if net_profit >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white h-100">
+            <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
                 <div class="card-body text-center">
-                    <h6>Net Position</h6>
-                    <h2 class="fw-bold">KES {{ net_profit|intcomma }}</h2>
+                    <h6 class="text-primary text-uppercase fw-bold">Closing Balance</h6>
+                    <h2 class="fw-bold text-dark">KES {{ net_balance|intcomma }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Breakdown Table -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white"><h5 class="mb-0">Expense Breakdown</h5></div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        {% for item in expenses_breakdown %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>{{ item.category__name }}</span>
-                            <span class="fw-bold">KES {{ item.total|intcomma }}</span>
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item text-muted">No expenses recorded.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+    <!-- Detailed Expense Breakdown (Mimicking the Excel Sheet) -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">Expense Analysis (By Category)</h5>
         </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white"><h5 class="mb-0">Recent Transactions</h5></div>
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead><tr><th>Date</th><th>Payee</th><th>Amount</th></tr></thead>
-                        <tbody>
-                            {% for e in recent_expenses %}
-                            <tr>
-                                <td>{{ e.date_incurred }}</td>
-                                <td>{{ e.payee }}</td>
-                                <td class="text-danger">- {{ e.amount|intcomma }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Category</th>
+                        <th class="text-end pe-4">Total Spent</th>
+                        <th class="text-end pe-4">% of Budget</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in category_breakdown %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ item.category__name }}</td>
+                        <td class="text-end pe-4">KES {{ item.total|intcomma }}</td>
+                        <td class="text-end pe-4">
+                            {% widthratio item.total total_expense 100 %}%
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">No expenses recorded for this year.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-light fw-bold">
+                    <tr>
+                        <td class="ps-4">TOTAL</td>
+                        <td class="text-end pe-4">KES {{ total_expense|intcomma }}</td>
+                        <td class="text-end pe-4">100%</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
+    </div>
+    
+    <div class="mt-4 text-center d-print-none">
+        <small class="text-muted">Generated by Community Connect on {% now "jS F Y H:i" %}</small>
     </div>
 </div>
 {% endblock %}
