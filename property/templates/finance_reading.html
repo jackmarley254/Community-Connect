@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Record Reading{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm mx-auto" style="max-width: 500px;">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-tint me-2"></i>Water Meter Entry</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label>Unit Number</label>
+                    {{ form.unit_number }}
+                </div>
+                <div class="mb-3">
+                    <label>Current Reading</label>
+                    {{ form.current_reading }}
+                    <small class="text-muted">Previous reading will be fetched automatically.</small>
+                </div>
+                <div class="mb-3">
+                    <label>Photo Proof</label>
+                    {{ form.reading_image }}
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary fw-bold">Submit & Generate Bill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,11 +4,24 @@ from django.db import models
 class Organization(models.Model):
     """
     Represents a Property Management Company (e.g., Luxia Management).
+    Now updated for SaaS Subscription logic.
     """
+    SUBSCRIPTION_CHOICES = [
+        ('STANDARD', 'Standard (0-50 Units)'),
+        ('PREMIUM', 'Premium (51-200 Units)'),
+        ('ENTERPRISE', 'Enterprise (200+ Units)'),
+    ]
+
     name = models.CharField(max_length=150, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     address = models.TextField(blank=True)
     contact_email = models.EmailField(blank=True)
+    
+    # --- SAAS FIELDS (NEW) ---
+    is_active = models.BooleanField(default=False, help_text="Active after integration fee payment")
+    subscription_plan = models.CharField(max_length=20, choices=SUBSCRIPTION_CHOICES, default='STANDARD')
+    max_units = models.IntegerField(default=50, help_text="Limit based on plan")
+    next_billing_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -26,7 +39,7 @@ class CustomUser(AbstractUser):
         ('HO', 'Home Owner/Landlord'),
         ('T', 'Tenant'),
         ('SEC', 'Security Desk'),
-        ('CT', 'Caretaker'), # NEW: Added Caretaker role
+        ('CT', 'Caretaker'), 
     ]
     
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -42,8 +55,14 @@ class CustomUser(AbstractUser):
         help_text="The organization this user belongs to."
     )
     
-    # NEW: Link Staff (Guard/Caretaker) to a specific property
-    # We use a string reference 'property.Property' to avoid circular imports
+    # Link Staff (Guard/Caretaker) to a specific property
+    # We use a string reference 'property.Property' to avoid circular imports here
+    # Note: The PropertyStaff model in property app handles the reverse relation better, 
+    # but keeping this field if you rely on it for simple checks, or rely purely on PropertyStaff.
+    # If we are using PropertyStaff entirely, this field can be deprecated or kept as a cache.
+    # For now, keeping it simple as per previous structure, but remember PropertyStaff is the source of truth for assignments.
+    
+    # assigned_property -> REMOVED in favor of PropertyStaff model in property app to fix circular dependency strictly.
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
@@ -55,7 +74,6 @@ class SupportMessage(models.Model):
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sent_support_messages')
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    # If True, this is a reply from the SaaS Owner to the Client
     is_from_admin = models.BooleanField(default=False)
     
     def __str__(self):

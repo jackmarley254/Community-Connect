@@ -22,6 +22,7 @@ urlpatterns = [
     path('pm/create-announcement/', views.pm_create_announcement_view, name='pm_create_announcement'),
     path('pm/units/bulk-create/', views.bulk_create_units_view, name='bulk_create_units'),
     path('admin/invoices/', views.invoice_admin_view, name='invoice_admin'),
+    path('pm/settings/', views.pm_settings_view, name='pm_settings'),
 
     # --- LANDLORD (HO) ACTIONS ---
     # New: Assign Tenant to Unit
@@ -53,4 +54,8 @@ urlpatterns = [
     path('api/admin/mark-paid/', views.mark_invoice_paid_api, name='mark_invoice_paid_api'),
     path('api/tenant/pay-invoice/', views.tenant_pay_invoice_api, name='tenant_pay_invoice_api'),
     path('api/mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
+    # --- FINANCE & OPS ---
+    path('finance/readings/', views.record_meter_reading_view, name='record_reading'),
+    path('finance/expense/', views.log_expense_view, name='log_expense'),
+    path('finance/report/', views.financial_report_view, name='financial_report'),
 ]

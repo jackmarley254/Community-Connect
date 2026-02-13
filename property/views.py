@@ -8,13 +8,41 @@ from django.utils import timezone
 from django.db.models import Sum, Count, Q
 import json
 import datetime
+from .models import PaymentConfiguration, Invoice
+from .mpesa import lipa_na_mpesa_online 
 
 # --- CUSTOM IMPORTS ---
 from users.decorators import role_required
 from users.models import CustomUser, Organization, SupportMessage
 from users.forms import CreateUserForm, SupportMessageForm
-from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog
-from .forms import CheckInForm, FeedbackForm
+from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
+from .forms import CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm
+
+@login_required
+@role_required(['PM'])
+def pm_settings_view(request):
+    org = get_user_organization(request.user)
+    
+    # Get or create the config object
+    config, created = PaymentConfiguration.objects.get_or_create(organization=org)
+    
+    if request.method == 'POST':
+        # Simple manual form handling for now
+        config.paybill_number = request.POST.get('paybill')
+        config.business_shortcode = request.POST.get('shortcode')
+        config.consumer_key = request.POST.get('key')
+        config.consumer_secret = request.POST.get('secret')
+        config.passkey = request.POST.get('passkey')
+        
+        # Mark as configured if fields are filled
+        if config.paybill_number and config.consumer_key:
+            config.is_configured = True
+            
+        config.save()
+        messages.success(request, "Payment settings updated successfully.")
+        return redirect('property:pm_dashboard')
+        
+    return render(request, 'pm_settings.html', {'config': config})
 
 # Check if mpesa file exists, otherwise mock it
 try:
@@ -376,8 +404,100 @@ def rental_process_checkout_view(request, stay_id):
     return render(request, 'rental_process_checkout.html', {'stay': stay, 'form': form})
 
 # ==========================================
-# 6. TENANT & INVOICING (Standard)
+# 6. TENANT & INVOICING (Updated Payment Logic)
 # ==========================================
+
+@login_required
+@role_required(['T'])
+@require_POST
+def tenant_pay_invoice_api(request):
+    invoice_id = request.POST.get('invoice_id')
+    
+    try:
+        invoice = Invoice.objects.get(id=invoice_id, unit__current_tenant=request.user, is_paid=False)
+        
+        # 1. Get Tenant's Phone Number
+        phone_number = request.user.phone_number 
+        if phone_number and phone_number.startswith('0'):
+            phone_number = '254' + phone_number[1:]
+        
+        if not phone_number:
+             return JsonResponse({'status': 'error', 'message': 'Please update your phone number in profile.'}, status=400)
+
+        # 2. PAYMENT ROUTING ENGINE
+        # Find the organization linked to this invoice
+        org = invoice.unit.property.organization
+        
+        # Fetch their payment configuration
+        try:
+            config = PaymentConfiguration.objects.get(organization=org, is_configured=True)
+        except PaymentConfiguration.DoesNotExist:
+             return JsonResponse({'status': 'error', 'message': 'Property Manager has not configured payments yet.'}, status=400)
+
+        # 3. Initiate STK Push (Using AGENCY Credentials)
+        response = lipa_na_mpesa_online(
+            phone_number=phone_number,
+            amount=invoice.amount,
+            account_reference=f"INV-{invoice.id}",
+            transaction_desc=f"Payment for Invoice #{invoice.id}",
+            # DYNAMIC KEYS PASSED HERE:
+            consumer_key=config.consumer_key,
+            consumer_secret=config.consumer_secret,
+            business_shortcode=config.business_shortcode,
+            passkey=config.passkey
+        )
+        
+        if 'ResponseCode' in response and response['ResponseCode'] == '0':
+            # SUCCESS: Store CheckoutRequestID for callback tracking
+            invoice.checkout_request_id = response.get('CheckoutRequestID')
+            invoice.save()
+            
+            return JsonResponse({'status': 'success', 'message': 'STK Push sent. Check your phone.'})
+        else:
+            error_msg = response.get('errorMessage', 'Failed to initiate payment.')
+            return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
+
+    except Invoice.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Invoice not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@csrf_exempt
+def mpesa_callback(request):
+    """
+    Central Callback Listener.
+    Identifies the Invoice using CheckoutRequestID and marks it as paid.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            stk_callback = data.get('Body', {}).get('stkCallback', {})
+            result_code = stk_callback.get('ResultCode')
+            checkout_request_id = stk_callback.get('CheckoutRequestID')
+            
+            if result_code == 0:
+                # Payment Successful
+                try:
+                    # FIND INVOICE BY CHECKOUT ID
+                    invoice = Invoice.objects.get(checkout_request_id=checkout_request_id)
+                    
+                    if not invoice.is_paid:
+                        invoice.is_paid = True
+                        invoice.payment_date = timezone.now()
+                        invoice.mpesa_code = stk_callback.get('CallbackMetadata', {}).get('Item', [])[1].get('Value') # Extract Receipt No roughly
+                        invoice.save()
+                        print(f"Invoice #{invoice.id} marked as PAID via Callback")
+                        
+                except Invoice.DoesNotExist:
+                    print(f"Callback received for unknown CheckoutID: {checkout_request_id}")
+            else:
+                print(f"Payment Failed Callback: {stk_callback.get('ResultDesc')}")
+                
+        except Exception as e:
+            print(f"Callback Error: {e}")
+            
+    return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
+
 @login_required
 @role_required(['T'])
 def tenant_dashboard_view(request):
@@ -470,10 +590,136 @@ def seed_data_view(request):
         return HttpResponse("Seeded: david.kamau, grace.wanjiku, brian.omondi, juma.kevin (pass123)")
     except Exception as e: return HttpResponse(f"Error: {e}")
 
-# --- ADD THIS AT THE BOTTOM OF property/views.py ---
-@csrf_exempt
-def mpesa_callback(request):
+# ==========================================
+# 7. FINANCE & OPERATIONS (NEW)
+# ==========================================
+
+@login_required
+@role_required(['PM', 'CT'])
+def record_meter_reading_view(request):
     """
-    Handles M-Pesa IPN responses.
+    Caretaker/PM records water reading. System auto-generates invoice.
     """
-    return JsonResponse({"ResultCode": 0, "ResultDesc": "Accepted"})
+    org = get_user_organization(request.user)
+    
+    if request.method == 'POST':
+        form = MeterReadingForm(request.POST, request.FILES)
+        if form.is_valid():
+            unit = form.cleaned_data['unit']
+            if unit.property.organization != org:
+                messages.error(request, "Unit not in your organization.")
+                return redirect('property:record_reading')
+
+            # 1. Get/Create Meter
+            meter, _ = Meter.objects.get_or_create(unit=unit, meter_type='WATER', defaults={'meter_number': f'M-{unit.unit_number}'})
+            
+            # 2. Calculate Bill
+            prev = form.cleaned_data['previous_reading']
+            curr = form.cleaned_data['current_reading']
+            consumption = curr - prev
+            rate = unit.property.water_unit_cost
+            bill = consumption * rate
+            
+            # 3. Create Reading
+            reading = form.save(commit=False)
+            reading.meter = meter
+            reading.previous_reading = prev
+            reading.consumption = consumption
+            reading.bill_amount = bill
+            reading.recorded_by = request.user
+            
+            # 4. Auto-Create Invoice
+            invoice = Invoice.objects.create(
+                unit=unit,
+                amount=bill,
+                due_date=timezone.now().date() + datetime.timedelta(days=7),
+                description=f"Water Bill: {prev}-{curr} ({consumption} units)",
+                sender_role='ORGANIZATION',
+                is_paid=False
+            )
+            reading.invoice = invoice
+            reading.save()
+            
+            messages.success(request, f"Recorded! Consumption: {consumption}. Bill: KES {bill}. Invoice sent.")
+            return redirect('property:record_reading')
+    else:
+        form = MeterReadingForm()
+        
+    return render(request, 'finance_reading.html', {'form': form})
+
+@login_required
+@role_required(['PM'])
+def log_expense_view(request):
+    """
+    Digital Petty Cash for PMs.
+    """
+    org = get_user_organization(request.user)
+    
+    if request.method == 'POST':
+        form = ExpenseForm(request.POST, request.FILES)
+        if form.is_valid():
+            expense = form.save(commit=False)
+            # Link to the first property found for now (Enhancement: Add Property Select to form)
+            prop = Property.objects.filter(organization=org).first() 
+            if not prop:
+                messages.error(request, "No property found.")
+                return redirect('property:pm_dashboard')
+                
+            expense.property = prop
+            expense.recorded_by = request.user
+            expense.save()
+            messages.success(request, "Expense recorded successfully.")
+            return redirect('property:financial_report')
+    else:
+        form = ExpenseForm()
+        # Filter categories by Org
+        form.fields['category'].queryset = ExpenseCategory.objects.filter(organization=org)
+        
+    return render(request, 'finance_expense.html', {'form': form})
+
+@login_required
+@role_required(['PM'])
+def financial_report_view(request):
+    """
+    The 'One-Click Report' Dashboard.
+    Aggregates Income vs Expenses.
+    """
+    org = get_user_organization(request.user)
+    
+    # Date Filter (Default: Current Month)
+    today = timezone.now()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+    
+    # 1. Income (Paid Invoices)
+    income_qs = Invoice.objects.filter(
+        unit__property__organization=org,
+        is_paid=True,
+        payment_date__month=month,
+        payment_date__year=year
+    )
+    total_income = income_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # 2. Expenses
+    expense_qs = Expense.objects.filter(
+        property__organization=org,
+        date_incurred__month=month,
+        date_incurred__year=year
+    )
+    total_expense = expense_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # 3. Net
+    net_profit = total_income - total_expense
+    
+    # 4. Breakdown
+    expenses_by_cat = expense_qs.values('category__name').annotate(total=Sum('amount'))
+    
+    context = {
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'net_profit': net_profit,
+        'expenses_breakdown': expenses_by_cat,
+        'month': month, 'year': year,
+        'recent_expenses': expense_qs.order_by('-date_incurred')[:10]
+    }
+    return render(request, 'finance_dashboard.html', context)

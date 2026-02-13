@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Financial Report{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Financial Overview</h2>
+        <div>
+            <a href="{% url 'property:log_expense' %}" class="btn btn-danger me-2"><i class="fas fa-minus-circle me-2"></i>Log Expense</a>
+            <button class="btn btn-outline-dark" onclick="window.print()"><i class="fas fa-print me-2"></i>Print Report</button>
+        </div>
+    </div>
+
+    <!-- P&L Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h6>Total Income</h6>
+                    <h2 class="fw-bold">KES {{ total_income|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <h6>Total Expenses</h6>
+                    <h2 class="fw-bold">KES {{ total_expense|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card {% if net_profit >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white h-100">
+                <div class="card-body text-center">
+                    <h6>Net Position</h6>
+                    <h2 class="fw-bold">KES {{ net_profit|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakdown Table -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white"><h5 class="mb-0">Expense Breakdown</h5></div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for item in expenses_breakdown %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ item.category__name }}</span>
+                            <span class="fw-bold">KES {{ item.total|intcomma }}</span>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">No expenses recorded.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white"><h5 class="mb-0">Recent Transactions</h5></div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Date</th><th>Payee</th><th>Amount</th></tr></thead>
+                        <tbody>
+                            {% for e in recent_expenses %}
+                            <tr>
+                                <td>{{ e.date_incurred }}</td>
+                                <td>{{ e.payee }}</td>
+                                <td class="text-danger">- {{ e.amount|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

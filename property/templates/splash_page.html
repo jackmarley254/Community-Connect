@@ -293,67 +293,67 @@
                 <p class="text-muted fs-5">Choose the plan that fits your portfolio size.</p>
             </div>
 
-            <div class="row justify-content-center g-4">
-                <!-- Package 1: The Hustler -->
-                <div class="col-lg-4">
+            <div class="row g-4 justify-content-center">
+                <!-- Standard -->
+                <div class="col-md-4">
                     <div class="pricing-card">
-                        <h4 class="fw-bold text-dark">The Hustler</h4>
-                        <p class="text-muted small">For individual landlords starting out.</p>
-                        <div class="price-tag">FREE <span class="price-period">/ month</span></div>
-                        <p class="small text-muted mb-4">+ 2.5% Transaction Fee per payment</p>
+                        <h4 class="fw-bold text-dark">Standard</h4>
+                        <p class="text-muted small">For small agencies (0-50 units)</p>
+                        <div class="price-tag">KES 3,000 <span class="price-period">/ month</span></div>
+                        <p class="small text-muted mb-4">Flat monthly rate</p>
                         
                         <a href="{% url 'users:auth_register' %}" class="btn btn-outline-primary w-100 rounded-pill fw-bold">Get Started</a>
                         
                         <ul class="check-list mt-4">
                             <li><i class="fas fa-check-circle"></i> Max 50 Units</li>
-                            <li><i class="fas fa-check-circle"></i> 1 Property</li>
-                            <li><i class="fas fa-check-circle"></i> Auto Invoicing</li>
-                            <li><i class="fas fa-check-circle"></i> Community Paybill Integration</li>
-                            <li><i class="fas fa-check-circle"></i> Basic Tenant Portal</li>
+                            <li><i class="fas fa-check-circle"></i> Automated Invoicing</li>
+                            <li><i class="fas fa-check-circle"></i> Basic Reports</li>
                         </ul>
                     </div>
                 </div>
 
-                <!-- Package 2: The Manager (Pro) -->
-                <div class="col-lg-4">
+                <!-- Premium -->
+                <div class="col-md-4">
                     <div class="pricing-card featured">
-                        <span class="pricing-badge">Recommended</span>
-                        <h4 class="fw-bold text-dark">The Manager</h4>
-                        <p class="text-muted small">For growing management agencies.</p>
-                        <div class="price-tag">KES 5,000 <span class="price-period">/ month</span></div>
-                        <p class="small text-muted mb-4">Flat rate. No transaction fees.</p>
+                        <span class="pricing-badge">Popular</span>
+                        <h4 class="fw-bold text-dark">Premium</h4>
+                        <p class="text-muted small">For growing agencies (51-200 units)</p>
+                        <div class="price-tag">KES 40 <span class="price-period">/ unit</span></div>
+                        <p class="small text-muted mb-4">Per unit pricing</p>
                         
                         <a href="{% url 'users:auth_register' %}" class="btn btn-primary w-100 rounded-pill fw-bold">Start Free Trial</a>
                         
                         <ul class="check-list mt-4">
-                            <li><i class="fas fa-check-circle"></i> <strong>Unlimited</strong> Units & Properties</li>
-                            <li><i class="fas fa-check-circle"></i> <strong>Your Own Paybill</strong> (Direct Funds)</li>
-                            <li><i class="fas fa-check-circle"></i> Security Desk App</li>
-                            <li><i class="fas fa-check-circle"></i> Expense & P&L Reports</li>
-                            <li><i class="fas fa-check-circle"></i> Multi-User Access (Caretakers)</li>
+                            <li><i class="fas fa-check-circle"></i> Multi-User Access</li>
+                            <li><i class="fas fa-check-circle"></i> Tenant Portal</li>
+                            <li><i class="fas fa-check-circle"></i> Expense Tracking</li>
                         </ul>
                     </div>
                 </div>
 
-                <!-- Package 3: The Tycoon (Enterprise) -->
-                <div class="col-lg-4">
+                <!-- Enterprise -->
+                <div class="col-md-4">
                     <div class="pricing-card">
-                        <h4 class="fw-bold text-dark">The Tycoon</h4>
-                        <p class="text-muted small">For large developers & estates.</p>
+                        <h4 class="fw-bold text-dark">Enterprise</h4>
+                        <p class="text-muted small">For large developers (200+ units)</p>
                         <div class="price-tag">Custom <span class="price-period">Quote</span></div>
-                        <p class="small text-muted mb-4">Tailored for complex operations.</p>
+                        <p class="small text-muted mb-4">Tailored solutions</p>
                         
                         <a href="#" class="btn btn-outline-dark w-100 rounded-pill fw-bold">Contact Sales</a>
                         
                         <ul class="check-list mt-4">
-                            <li><i class="fas fa-check-circle"></i> Everything in Manager</li>
-                            <li><i class="fas fa-check-circle"></i> <strong>Multi-Paybill Routing</strong></li>
-                            <li><i class="fas fa-check-circle"></i> Dedicated Account Manager</li>
-                            <li><i class="fas fa-check-circle"></i> Custom Domain (portal.yours.com)</li>
-                            <li><i class="fas fa-check-circle"></i> Biometric Gate API Access</li>
+                            <li><i class="fas fa-check-circle"></i> Dedicated Support</li>
+                            <li><i class="fas fa-check-circle"></i> Custom Domain</li>
+                            <li><i class="fas fa-check-circle"></i> Priority Features</li>
                         </ul>
                     </div>
                 </div>
+            </div>
+            
+            <!-- One-time Fee Note -->
+            <div class="mt-5 text-center p-4 bg-white rounded-4 border shadow-sm" style="max-width: 800px; margin: 0 auto;">
+                <h5 class="fw-bold text-dark mb-2">One-Time Integration Fee</h5>
+                <p class="text-muted mb-0">A flat fee of <span class="text-primary fw-bold">KES 20,000</span> applies to all new accounts for system setup, data migration, and staff training.</p>
             </div>
         </div>
     </section>
