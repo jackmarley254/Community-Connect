@@ -11,13 +11,17 @@ import datetime
 from .models import PaymentConfiguration, Invoice
 from .mpesa import lipa_na_mpesa_online
 from django.db.models.functions import TruncMonth
+from .utils import format_currency
 
 # --- CUSTOM IMPORTS ---
 from users.decorators import role_required
 from users.models import CustomUser, Organization, SupportMessage
 from users.forms import CreateUserForm, SupportMessageForm
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
-from .forms import CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm
+from .forms import (
+    CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm,
+    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm
+)
 
 @login_required
 @role_required(['PM'])
@@ -738,3 +742,148 @@ def financial_report_view(request):
         'category_breakdown': category_breakdown,
     }
     return render(request, 'finance_dashboard.html', context)
+
+# ==========================================
+# 8. PM OPERATIONS (NEW)
+# ==========================================
+
+@login_required
+@role_required(['PM'])
+def pm_add_user_view(request):
+    org = get_user_organization(request.user)
+    if request.method == 'POST':
+        form = PMUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.organization = org # Auto-link to PM's Org
+            user.set_password('pass123') # Default password for now
+            user.save()
+            messages.success(request, f"User {user.username} created successfully.")
+            return redirect('property:pm_dashboard')
+    else:
+        form = PMUserCreationForm()
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': 'Add New User'})
+
+@login_required
+@role_required(['PM'])
+def pm_add_property_view(request):
+    org = get_user_organization(request.user)
+    if request.method == 'POST':
+        form = PropertyCreationForm(request.POST)
+        if form.is_valid():
+            prop = form.save(commit=False)
+            prop.organization = org # Auto-link to PM's Org
+            prop.save()
+            messages.success(request, f"Property {prop.name} created successfully.")
+            return redirect('property:pm_dashboard')
+    else:
+        form = PropertyCreationForm()
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': 'Add New Property'})
+
+@login_required
+@role_required(['PM'])
+def pm_create_invoice_view(request):
+    org = get_user_organization(request.user)
+    if request.method == 'POST':
+        form = InvoiceCreationForm(request.POST)
+        if form.is_valid():
+            unit = form.cleaned_data['unit_number']
+            if unit.property.organization != org:
+                messages.error(request, "Unit not in your organization.")
+                return redirect('property:pm_create_invoice')
+            
+            invoice = form.save(commit=False)
+            invoice.unit = unit
+            invoice.sender_role = 'ORGANIZATION'
+            invoice.save()
+            messages.success(request, "Invoice sent successfully.")
+            return redirect('property:pm_dashboard')
+    else:
+        form = InvoiceCreationForm()
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': 'Create Invoice'})
+
+@login_required
+@role_required(['PM'])
+def pm_post_announcement_view(request):
+    org = get_user_organization(request.user)
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        property_id = request.POST.get('property_id')
+        
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.posted_by = request.user
+            
+            if property_id == 'all':
+                # Logic to post to all properties (simplified: pick first for now or loop)
+                # For this implementation, let's just pick one to save, or create duplicates
+                props = Property.objects.filter(organization=org)
+                for p in props:
+                    Announcement.objects.create(
+                        property=p, 
+                        title=announcement.title, 
+                        content=announcement.content, 
+                        posted_by=request.user
+                    )
+                messages.success(request, "Announcement broadcasted to all properties.")
+            else:
+                announcement.property = get_object_or_404(Property, id=property_id, organization=org)
+                announcement.save()
+                messages.success(request, "Announcement posted.")
+            return redirect('property:pm_dashboard')
+    else:
+        form = AnnouncementForm()
+        
+    properties = Property.objects.filter(organization=org)
+    return render(request, 'pm_create_announcement.html', {'form': form, 'properties': properties})
+
+@login_required
+@role_required(['PM'])
+def financial_report_pdf_view(request):
+    """
+    Renders a print-optimized version of the Financial Report.
+    """
+    org = get_user_organization(request.user)
+    
+    today = timezone.now()
+    try:
+        month = int(request.GET.get('month', today.month))
+        year = int(request.GET.get('year', today.year))
+    except ValueError:
+        month = today.month
+        year = today.year
+    
+    # 1. Income
+    income_qs = Invoice.objects.filter(
+        unit__property__organization=org,
+        is_paid=True,
+        payment_date__month=month,
+        payment_date__year=year
+    )
+    total_income = income_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # 2. Expenses
+    expense_qs = Expense.objects.filter(
+        property__organization=org,
+        date_incurred__month=month,
+        date_incurred__year=year
+    )
+    total_expense = expense_qs.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    # 3. Net
+    net_profit = total_income - total_expense
+    
+    # 4. Breakdown
+    expenses_breakdown = expense_qs.values('category__name').annotate(total=Sum('amount')).order_by('-total')
+    
+    context = {
+        'org': org,
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'net_profit': net_profit,
+        'expenses_breakdown': expenses_breakdown,
+        'month': month,
+        'year': year,
+        'date_generated': today
+    }
+    return render(request, 'finance_report_pdf.html', context)

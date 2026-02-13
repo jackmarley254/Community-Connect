@@ -1,5 +1,6 @@
 from django import forms
-from .models import ShortTermStay, Unit, MeterReading, Expense, PaymentConfiguration, ExpenseCategory
+from users.models import CustomUser
+from .models import Property, Unit, Announcement, Invoice, Ticket, ShortTermStay, MeterReading, Expense, PaymentConfiguration
 
 class CheckInForm(forms.ModelForm):
     unit_number = forms.CharField(max_length=20, label="Unit Number", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. A-104'}))
@@ -82,3 +83,61 @@ class PaymentConfigForm(forms.ModelForm):
             'consumer_secret': forms.PasswordInput(attrs={'class': 'form-control'}),
             'passkey': forms.PasswordInput(attrs={'class': 'form-control'}),
         }
+
+# --- NEW PM OPERATIONS FORMS ---
+
+class PMUserCreationForm(forms.ModelForm):
+    """Form for PM to add new users (Tenants, Landlords, Staff)"""
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'role']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'role': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class PropertyCreationForm(forms.ModelForm):
+    """Form for PM to add a new Property"""
+    class Meta:
+        model = Property
+        fields = ['name', 'address', 'blocks', 'water_unit_cost', 'electricity_unit_cost']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'blocks': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Block A, Block B'}),
+            'water_unit_cost': forms.NumberInput(attrs={'class': 'form-control'}),
+            'electricity_unit_cost': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class AnnouncementForm(forms.ModelForm):
+    """Form for PM to post announcements"""
+    class Meta:
+        model = Announcement
+        fields = ['title', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class InvoiceCreationForm(forms.ModelForm):
+    """Form for PM to create a manual invoice"""
+    unit_number = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Unit No.'}))
+    
+    class Meta:
+        model = Invoice
+        fields = ['amount', 'due_date', 'description']
+        widgets = {
+            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+    
+    def clean_unit_number(self):
+        unit_num = self.cleaned_data.get('unit_number')
+        unit = Unit.objects.filter(unit_number__iexact=unit_num).first()
+        if not unit: raise forms.ValidationError("Unit not found.")
+        return unit

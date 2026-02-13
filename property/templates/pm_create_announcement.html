@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Post Announcement{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0 fw-bold">Broadcast Announcement</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Target Property</label>
+                            <select name="property_id" class="form-select">
+                                <option value="all">All Properties (Broadcast)</option>
+                                {% for prop in properties %}
+                                <option value="{{ prop.id }}">{{ prop.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Title</label>
+                            {{ form.title }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Message</label>
+                            {{ form.content }}
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-info text-white fw-bold">Post Announcement</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

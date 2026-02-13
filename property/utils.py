@@ -11,3 +11,6 @@ def render_print_view(request, template_path, context):
     template = get_template(template_path)
     html = template.render(context)
     return HttpResponse(html)
+
+def format_currency(amount):
+    return f"KES {amount:,.2f}"
