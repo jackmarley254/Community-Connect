@@ -15,6 +15,31 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # --- START OF FIX ---
+        migrations.RunSQL(
+            """
+            SET FOREIGN_KEY_CHECKS = 0;
+            DROP TABLE IF EXISTS 
+                property_visitorlog, 
+                property_shorttermstay, 
+                property_ticket, 
+                property_unit, 
+                property_softwareinvoice, 
+                property_propertystaff, 
+                property_announcement, 
+                property_expense, 
+                property_parkinglot, 
+                property_property, 
+                property_paymentconfiguration, 
+                property_notification, 
+                property_meterreading, 
+                property_expensecategory, 
+                property_meter, 
+                property_invoice;
+            SET FOREIGN_KEY_CHECKS = 1;
+            """
+        ),
+        # --- END OF FIX ---
         migrations.CreateModel(
             name='Invoice',
             fields=[
