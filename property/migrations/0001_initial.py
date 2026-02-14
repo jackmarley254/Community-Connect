@@ -212,7 +212,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='meter',
             name='unit',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit'),
         ),
         migrations.AddField(
             model_name='invoice',
