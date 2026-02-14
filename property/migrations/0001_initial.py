@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # --- START OF FIX ---
+        # 1. CLEANUP: Delete any "zombie" tables from failed deploys
         migrations.RunSQL(
             """
             SET FOREIGN_KEY_CHECKS = 0;
@@ -39,19 +39,19 @@ class Migration(migrations.Migration):
             SET FOREIGN_KEY_CHECKS = 1;
             """
         ),
-        # --- END OF FIX ---
+
+        # 2. INDEPENDENT MODELS (Depend only on Users/Organization)
         migrations.CreateModel(
-            name='Invoice',
+            name='PaymentConfiguration',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('due_date', models.DateField()),
-                ('is_paid', models.BooleanField(default=False)),
-                ('description', models.CharField(max_length=200)),
-                ('sender_role', models.CharField(default='ORGANIZATION', max_length=20)),
-                ('mpesa_code', models.CharField(blank=True, max_length=50, null=True)),
-                ('checkout_request_id', models.CharField(blank=True, help_text='M-Pesa Transaction ID for tracking callbacks', max_length=100, null=True)),
-                ('payment_date', models.DateTimeField(blank=True, null=True)),
+                ('paybill_number', models.CharField(max_length=20)),
+                ('consumer_key', models.CharField(help_text='Daraja Consumer Key', max_length=255)),
+                ('consumer_secret', models.CharField(help_text='Daraja Consumer Secret', max_length=255)),
+                ('business_shortcode', models.CharField(help_text='Shortcode/Paybill', max_length=20)),
+                ('passkey', models.CharField(blank=True, help_text='Lipa na M-Pesa Passkey', max_length=255, null=True)),
+                ('is_configured', models.BooleanField(default=False)),
+                ('organization', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='payment_config', to='users.organization')),
             ],
         ),
         migrations.CreateModel(
@@ -66,6 +66,18 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='SoftwareInvoice',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('description', models.CharField(max_length=255)),
+                ('date_issued', models.DateField(auto_now_add=True)),
+                ('due_date', models.DateField()),
+                ('is_paid', models.BooleanField(default=False)),
+                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='software_invoices', to='users.organization')),
+            ],
+        ),
+        migrations.CreateModel(
             name='Notification',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -76,19 +88,8 @@ class Migration(migrations.Migration):
                 ('sender', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sent_notifications', to=settings.AUTH_USER_MODEL)),
             ],
         ),
-        migrations.CreateModel(
-            name='PaymentConfiguration',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('paybill_number', models.CharField(max_length=20)),
-                ('consumer_key', models.CharField(help_text='Daraja Consumer Key', max_length=255)),
-                ('consumer_secret', models.CharField(help_text='Daraja Consumer Secret', max_length=255)),
-                ('business_shortcode', models.CharField(help_text='Shortcode/Paybill', max_length=20)),
-                ('passkey', models.CharField(blank=True, help_text='Lipa na M-Pesa Passkey', max_length=255, null=True)),
-                ('is_configured', models.BooleanField(default=False)),
-                ('organization', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='payment_config', to='users.organization')),
-            ],
-        ),
+
+        # 3. BASE PROPERTY MODEL
         migrations.CreateModel(
             name='Property',
             fields=[
@@ -104,14 +105,18 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Properties',
             },
         ),
+
+        # 4. MODELS DEPENDING ON PROPERTY
         migrations.CreateModel(
-            name='ParkingLot',
+            name='Announcement',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('lot_number', models.CharField(max_length=10)),
-                ('current_tenant', models.OneToOneField(blank=True, limit_choices_to={'role': 'T'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_parking_lot', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, limit_choices_to={'role': 'HO'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_parking_lots', to=settings.AUTH_USER_MODEL)),
-                ('property', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='property.property')),
+                ('title', models.CharField(max_length=200)),
+                ('content', models.TextField()),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('is_active', models.BooleanField(default=True)),
+                ('posted_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('property', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='announcements', to='property.property')),
             ],
         ),
         migrations.CreateModel(
@@ -129,15 +134,13 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Announcement',
+            name='ParkingLot',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('content', models.TextField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('posted_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('property', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='announcements', to='property.property')),
+                ('lot_number', models.CharField(max_length=10)),
+                ('current_tenant', models.OneToOneField(blank=True, limit_choices_to={'role': 'T'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_parking_lot', to=settings.AUTH_USER_MODEL)),
+                ('owner', models.ForeignKey(blank=True, limit_choices_to={'role': 'HO'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_parking_lots', to=settings.AUTH_USER_MODEL)),
+                ('property', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='property.property')),
             ],
         ),
         migrations.CreateModel(
@@ -148,18 +151,8 @@ class Migration(migrations.Migration):
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignment', to=settings.AUTH_USER_MODEL)),
             ],
         ),
-        migrations.CreateModel(
-            name='SoftwareInvoice',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('description', models.CharField(max_length=255)),
-                ('date_issued', models.DateField(auto_now_add=True)),
-                ('due_date', models.DateField()),
-                ('is_paid', models.BooleanField(default=False)),
-                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='software_invoices', to='users.organization')),
-            ],
-        ),
+
+        # 5. UNIT MODEL (Depends on Property)
         migrations.CreateModel(
             name='Unit',
             fields=[
@@ -178,19 +171,32 @@ class Migration(migrations.Migration):
                 'unique_together': {('property', 'block', 'floor', 'door_number')},
             },
         ),
+
+        # 6. MODELS DEPENDING ON UNIT (Moved down so they can reference Unit directly)
         migrations.CreateModel(
-            name='Ticket',
+            name='Invoice',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('description', models.TextField()),
-                ('priority', models.CharField(default='MEDIUM', max_length=10)),
-                ('status', models.CharField(default='OPEN', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('assigned_to', models.CharField(blank=True, max_length=100, null=True)),
-                ('submitted_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='property.unit')),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('due_date', models.DateField()),
+                ('is_paid', models.BooleanField(default=False)),
+                ('description', models.CharField(max_length=200)),
+                ('sender_role', models.CharField(default='ORGANIZATION', max_length=20)),
+                ('mpesa_code', models.CharField(blank=True, max_length=50, null=True)),
+                ('checkout_request_id', models.CharField(blank=True, help_text='M-Pesa Transaction ID for tracking callbacks', max_length=100, null=True)),
+                ('payment_date', models.DateTimeField(blank=True, null=True)),
+                # Field added directly here:
+                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invoices', to='property.unit')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Meter',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('meter_number', models.CharField(help_text='Serial Number', max_length=50)),
+                ('meter_type', models.CharField(choices=[('WATER', 'Water'), ('ELEC', 'Electricity')], default='WATER', max_length=10)),
+                # Field added directly here:
+                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit')),
             ],
         ),
         migrations.CreateModel(
@@ -212,6 +218,21 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Ticket',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=200)),
+                ('description', models.TextField()),
+                ('priority', models.CharField(default='MEDIUM', max_length=10)),
+                ('status', models.CharField(default='OPEN', max_length=20)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('assigned_to', models.CharField(blank=True, max_length=100, null=True)),
+                ('submitted_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='property.unit')),
+            ],
+        ),
+        migrations.CreateModel(
             name='VisitorLog',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -229,15 +250,8 @@ class Migration(migrations.Migration):
                 ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='visitors', to='property.unit')),
             ],
         ),
-        migrations.CreateModel(
-            name='Meter',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('meter_number', models.CharField(help_text='Serial Number', max_length=50)),
-                ('meter_type', models.CharField(choices=[('WATER', 'Water'), ('ELEC', 'Electricity')], default='WATER', max_length=10)),
-                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit')),
-            ],
-        ),
+
+        # 7. METER READING (Depends on Meter and Invoice)
         migrations.CreateModel(
             name='MeterReading',
             fields=[
@@ -252,10 +266,5 @@ class Migration(migrations.Migration):
                 ('meter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='readings', to='property.meter')),
                 ('recorded_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
             ],
-        ),
-        migrations.AddField(
-            model_name='invoice',
-            name='unit',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invoices', to='property.unit'),
         ),
     ]
