@@ -70,4 +70,4 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     messages.info(request, 'You have been successfully logged out.')
-    return redirect('users:splash_page')
+    return redirect('splash_page')
