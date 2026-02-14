@@ -1,19 +1,25 @@
 from django.contrib import admin
 from django.urls import path, include
-from property.views import dashboard_redirect_view
 from django.conf.urls.static import static
 from django.conf import settings
+
+# 1. Import Views from your apps
+from property.views import dashboard_redirect_view
+from users.views import splash_page_view  # <--- Import the splash view here
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Redirect logged-in users
+    # 2. Redirect logged-in users
     path('home/', dashboard_redirect_view, name='home'),
     
-    # ROOT URL -> Goes to users/urls.py (which now has the splash page)
-    path('', include('users.urls')),
+    # 3. ROOT URL -> Points directly to the view (Fixes the duplicate include)
+    path('', splash_page_view, name='splash_page'),
     
+    # 4. AUTH URLS -> Includes users.urls (e.g., /auth/login/)
     path('auth/', include('users.urls')),
+    
+    # 5. APP URLS
     path('app/', include('property.urls')),
 ]
 
