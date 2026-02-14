@@ -55,14 +55,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Meter',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('meter_number', models.CharField(help_text='Serial Number', max_length=50)),
-                ('meter_type', models.CharField(choices=[('WATER', 'Water'), ('ELEC', 'Electricity')], default='WATER', max_length=10)),
-            ],
-        ),
-        migrations.CreateModel(
             name='ExpenseCategory',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -72,21 +64,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name_plural': 'Expense Categories',
             },
-        ),
-        migrations.CreateModel(
-            name='MeterReading',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date_recorded', models.DateField(auto_now_add=True)),
-                ('previous_reading', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('current_reading', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('consumption', models.DecimalField(decimal_places=2, help_text='Units Used', max_digits=10)),
-                ('bill_amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('reading_image', models.ImageField(blank=True, null=True, upload_to='meter_readings/%Y/%m/')),
-                ('invoice', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='property.invoice')),
-                ('meter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='readings', to='property.meter')),
-                ('recorded_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-            ],
         ),
         migrations.CreateModel(
             name='Notification',
@@ -234,16 +211,6 @@ class Migration(migrations.Migration):
                 ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='short_term_stays', to='property.unit')),
             ],
         ),
-        migrations.AddField(
-            model_name='meter',
-            name='unit',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit'),
-        ),
-        migrations.AddField(
-            model_name='invoice',
-            name='unit',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invoices', to='property.unit'),
-        ),
         migrations.CreateModel(
             name='VisitorLog',
             fields=[
@@ -261,5 +228,34 @@ class Migration(migrations.Migration):
                 ('notified_tenant', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
                 ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='visitors', to='property.unit')),
             ],
+        ),
+        migrations.CreateModel(
+            name='Meter',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('meter_number', models.CharField(help_text='Serial Number', max_length=50)),
+                ('meter_type', models.CharField(choices=[('WATER', 'Water'), ('ELEC', 'Electricity')], default='WATER', max_length=10)),
+                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meter', to='property.unit')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='MeterReading',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('date_recorded', models.DateField(auto_now_add=True)),
+                ('previous_reading', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('current_reading', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('consumption', models.DecimalField(decimal_places=2, help_text='Units Used', max_digits=10)),
+                ('bill_amount', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('reading_image', models.ImageField(blank=True, null=True, upload_to='meter_readings/%Y/%m/')),
+                ('invoice', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='property.invoice')),
+                ('meter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='readings', to='property.meter')),
+                ('recorded_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.AddField(
+            model_name='invoice',
+            name='unit',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invoices', to='property.unit'),
         ),
     ]
