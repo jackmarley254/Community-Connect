@@ -186,3 +186,16 @@ class BulkParkingCreationForm(forms.Form):
         super().__init__(*args, **kwargs)
         if org:
             self.fields['property'].queryset = Property.objects.filter(organization=org)
+
+class BulkUnitCreationForm(forms.Form):
+    property = forms.ModelChoiceField(queryset=Property.objects.none())
+    block = forms.CharField(required=False, help_text="e.g. Block A")
+    floor_start = forms.IntegerField(min_value=0, initial=1)
+    floor_end = forms.IntegerField(min_value=0, initial=5)
+    units_per_floor = forms.IntegerField(min_value=1, initial=4, help_text="How many doors per floor?")
+    
+    def __init__(self, *args, **kwargs):
+        org = kwargs.pop('org', None)
+        super().__init__(*args, **kwargs)
+        if org:
+            self.fields['property'].queryset = Property.objects.filter(organization=org)
