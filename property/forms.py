@@ -155,3 +155,34 @@ class UnitCreationForm(forms.ModelForm):
             'owner': forms.Select(attrs={'class': 'form-select'}), # Optional: Assign Landlord immediately
             'is_locked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class BulkParkingCreationForm(forms.Form):
+    property = forms.ModelChoiceField(
+        queryset=Property.objects.none(),
+        label="Select Property",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    prefix = forms.CharField(
+        initial="P", 
+        label="Lot Prefix",
+        help_text="e.g. 'P' generates P-1, P-2...",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    start_number = forms.IntegerField(
+        initial=1, 
+        min_value=1,
+        label="Start Number",
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    end_number = forms.IntegerField(
+        initial=20, 
+        min_value=1,
+        label="End Number",
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        org = kwargs.pop('org', None)
+        super().__init__(*args, **kwargs)
+        if org:
+            self.fields['property'].queryset = Property.objects.filter(organization=org)

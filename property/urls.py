@@ -30,6 +30,10 @@ urlpatterns = [
     path('pm/create-invoice/', views.pm_create_invoice_view, name='pm_create_invoice'),
     path('pm/post-announcement/', views.pm_post_announcement_view, name='pm_post_announcement'),
     path('pm/add-unit/', views.pm_add_unit_view, name='pm_add_unit'),
+    # New Bulk Actions
+    path('pm/units/bulk/', views.bulk_create_units_view, name='bulk_create_units'),
+    path('pm/parking/bulk/', views.bulk_create_parking_view, name='bulk_create_parking'),
+    path('pm/invoices/all/', views.pm_all_invoices_view, name='pm_all_invoices'),
 
     # --- LANDLORD (HO) ACTIONS ---
     # New: Assign Tenant to Unit

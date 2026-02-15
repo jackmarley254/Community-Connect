@@ -20,7 +20,7 @@ from users.forms import CreateUserForm, SupportMessageForm
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
 from .forms import (
     CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm,
-    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm
+    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm, BulkParkingCreationForm
 )
 
 @login_required
@@ -208,6 +208,48 @@ def pm_create_announcement_view(request):
     properties = Property.objects.filter(organization=org)
     return render(request, 'pm_create_announcement.html', {'properties': properties})
 
+@login_required
+@role_required(['PM'])
+def bulk_create_parking_view(request):
+    org = get_user_organization(request.user)
+    
+    if request.method == 'POST':
+        form = BulkParkingCreationForm(request.POST, org=org)
+        if form.is_valid():
+            prop = form.cleaned_data['property']
+            prefix = form.cleaned_data['prefix']
+            start = form.cleaned_data['start_number']
+            end = form.cleaned_data['end_number']
+            
+            created_count = 0
+            skipped_count = 0
+            
+            # Loop to create lots (e.g., P-1 to P-20)
+            for i in range(start, end + 1):
+                lot_number = f"{prefix}-{i}"
+                
+                # Check if it already exists to avoid errors
+                if not ParkingLot.objects.filter(property=prop, lot_number=lot_number).exists():
+                    ParkingLot.objects.create(property=prop, lot_number=lot_number)
+                    created_count += 1
+                else:
+                    skipped_count += 1
+            
+            msg = f"Success! Created {created_count} parking lots."
+            if skipped_count > 0:
+                msg += f" (Skipped {skipped_count} duplicates)."
+                
+            messages.success(request, msg)
+            return redirect('property:pm_dashboard')
+    else:
+        form = BulkParkingCreationForm(org=org)
+
+    # Re-use the generic form template to save time
+    return render(request, 'pm_form_generic.html', {
+        'form': form, 
+        'title': 'Bulk Create Parking'
+    })
+
 # ==========================================
 # 4. LANDLORD BI DASHBOARD
 # ==========================================
@@ -230,8 +272,10 @@ def ho_dashboard_view(request):
 
     # 4. Financials
     all_invoices = Invoice.objects.filter(unit__in=my_units).order_by('-due_date')
-    pending_amount = all_invoices.filter(is_paid=False).aggregate(Sum('amount'))['amount__sum'] or 0
-    net_income = all_invoices.filter(is_paid=True).aggregate(Sum('amount'))['amount__sum'] or 0
+    rent_invoices = all_invoices.filter(sender_role='HO')
+    service_charge_invoices = all_invoices.filter(sender_role='ORGANIZATION')
+    pending_rent = rent_invoices.filter(is_paid=False).aggregate(Sum('amount'))['amount__sum'] or 0
+    net_income = rent_invoices.filter(is_paid=True).aggregate(Sum('amount'))['amount__sum'] or 0
     
     # Collection Rate (This Month)
     today = timezone.now()
@@ -256,7 +300,7 @@ def ho_dashboard_view(request):
         'vacant_units': vacant_units,
         'occupancy_rate': occupancy_rate,
         'collection_rate': collection_rate,
-        'pending_amount': pending_amount,
+        'pending_amount': pending_rent,
         'net_income': net_income,
         'locked_units': locked_units,
     }
@@ -651,6 +695,54 @@ def record_meter_reading_view(request):
         form = MeterReadingForm()
         
     return render(request, 'finance_reading.html', {'form': form})
+
+@login_required
+@role_required(['PM'])
+def pm_all_invoices_view(request):
+    org = get_user_organization(request.user)
+    
+    # Get all invoices for this organization's units
+    invoices = Invoice.objects.filter(unit__property__organization=org).select_related('unit', 'unit__current_tenant').order_by('-date_issued')
+    
+    return render(request, 'pm_all_invoices.html', {'invoices': invoices})
+
+@login_required
+@role_required(['PM'])
+def bulk_create_units_view(request):
+    org = get_user_organization(request.user)
+    
+    if request.method == 'POST':
+        form = BulkUnitCreationForm(request.POST, org=org)
+        if form.is_valid():
+            prop = form.cleaned_data['property']
+            block = form.cleaned_data['block']
+            start = form.cleaned_data['floor_start']
+            end = form.cleaned_data['floor_end']
+            count = form.cleaned_data['units_per_floor']
+            
+            created_count = 0
+            for floor in range(start, end + 1):
+                for door in range(1, count + 1):
+                    # Format: 01, 02...
+                    door_str = f"{door:02d}" 
+                    
+                    # Avoid duplicates
+                    if not Unit.objects.filter(property=prop, block=block, floor=str(floor), door_number=door_str).exists():
+                        Unit.objects.create(
+                            property=prop,
+                            block=block,
+                            floor=str(floor),
+                            door_number=door_str,
+                            organization_owner=org
+                        )
+                        created_count += 1
+            
+            messages.success(request, f"Successfully created {created_count} units.")
+            return redirect('property:pm_dashboard')
+    else:
+        form = BulkUnitCreationForm(org=org)
+        
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': 'Bulk Create Units'})
 
 @login_required
 @role_required(['PM'])
