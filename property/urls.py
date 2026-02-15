@@ -29,6 +29,7 @@ urlpatterns = [
     path('pm/add-property/', views.pm_add_property_view, name='pm_add_property'),
     path('pm/create-invoice/', views.pm_create_invoice_view, name='pm_create_invoice'),
     path('pm/post-announcement/', views.pm_post_announcement_view, name='pm_post_announcement'),
+    path('pm/add-unit/', views.pm_add_unit_view, name='pm_add_unit'),
 
     # --- LANDLORD (HO) ACTIONS ---
     # New: Assign Tenant to Unit

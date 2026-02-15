@@ -141,3 +141,17 @@ class InvoiceCreationForm(forms.ModelForm):
         unit = Unit.objects.filter(unit_number__iexact=unit_num).first()
         if not unit: raise forms.ValidationError("Unit not found.")
         return unit
+
+class UnitCreationForm(forms.ModelForm):
+    class Meta:
+        model = Unit
+        # We exclude auto-generated fields like unit_number
+        fields = ['property', 'block', 'floor', 'door_number', 'is_locked', 'owner']
+        widgets = {
+            'property': forms.Select(attrs={'class': 'form-select'}),
+            'block': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Block A'}),
+            'floor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 1'}),
+            'door_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 05'}),
+            'owner': forms.Select(attrs={'class': 'form-select'}), # Optional: Assign Landlord immediately
+            'is_locked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

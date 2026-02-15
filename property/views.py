@@ -20,7 +20,7 @@ from users.forms import CreateUserForm, SupportMessageForm
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
 from .forms import (
     CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm,
-    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm
+    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm
 )
 
 @login_required
@@ -887,3 +887,38 @@ def financial_report_pdf_view(request):
         'date_generated': today
     }
     return render(request, 'finance_report_pdf.html', context)
+
+@login_required
+@role_required(['PM'])
+def pm_add_unit_view(request):
+    org = get_user_organization(request.user)
+    
+    if request.method == 'POST':
+        form = UnitCreationForm(request.POST)
+        if form.is_valid():
+            unit = form.save(commit=False)
+            
+            # Security Check: Ensure selected property belongs to this Org
+            if unit.property.organization != org:
+                messages.error(request, "You cannot add units to properties you do not manage.")
+                return redirect('property:pm_dashboard')
+
+            unit.organization_owner = org  # Auto-link to Organization
+            
+            try:
+                unit.save()
+                messages.success(request, f"Unit {unit.unit_number} added successfully.")
+                return redirect('property:pm_dashboard')
+            except IntegrityError:
+                messages.error(request, "This unit (Block/Floor/Door) already exists in this property.")
+    else:
+        form = UnitCreationForm()
+        # Filter dropdown: Only show properties for this Organization
+        form.fields['property'].queryset = Property.objects.filter(organization=org)
+        # Filter owner dropdown: Only show Landlords (HO)
+        form.fields['owner'].queryset = CustomUser.objects.filter(role='HO')
+
+    return render(request, 'pm_form_generic.html', {
+        'form': form, 
+        'title': 'Add New Unit'
+    })
