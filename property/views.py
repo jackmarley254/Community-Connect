@@ -20,7 +20,7 @@ from users.forms import CreateUserForm, SupportMessageForm
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
 from .forms import (
     CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm,
-    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm, BulkParkingCreationForm
+    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm, BulkParkingCreationForm, BulkUnitCreationForm
 )
 
 @login_required
@@ -701,8 +701,10 @@ def record_meter_reading_view(request):
 def pm_all_invoices_view(request):
     org = get_user_organization(request.user)
     
-    # Get all invoices for this organization's units
-    invoices = Invoice.objects.filter(unit__property__organization=org).select_related('unit', 'unit__current_tenant').order_by('-date_issued')
+    # CHANGE: order_by('-date_issued') -> order_by('-due_date')
+    invoices = Invoice.objects.filter(
+        unit__property__organization=org
+    ).select_related('unit', 'unit__current_tenant').order_by('-due_date')
     
     return render(request, 'pm_all_invoices.html', {'invoices': invoices})
 
