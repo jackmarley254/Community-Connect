@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">
+                <i class="bi bi-receipt-cutoff text-secondary me-2"></i> All Invoices
+            </h2>
+            <p class="text-muted">Audit trail of all invoices sent by your organization.</p>
+        </div>
+        <a href="{% url 'property:pm_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <small class="text-uppercase text-muted fw-bold">Total Invoiced</small>
+                    <h4 class="fw-bold mt-1">KES {{ invoices|length|intcomma }}</h4> 
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Invoice #</th>
+                            <th>Unit</th>
+                            <th>Tenant</th>
+                            <th>Description</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td class="ps-4 fw-bold">#{{ invoice.id }}</td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border">
+                                    {{ invoice.unit.unit_number }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if invoice.unit.current_tenant %}
+                                    {{ invoice.unit.current_tenant.username }}
+                                {% else %}
+                                    <span class="text-muted fst-italic">Vacant</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ invoice.description|truncatechars:30 }}</td>
+                            <td>
+                                {% if invoice.is_overdue %}
+                                    <span class="text-danger fw-bold">{{ invoice.due_date|date:"M d, Y" }}</span>
+                                {% else %}
+                                    {{ invoice.due_date|date:"M d, Y" }}
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold">KES {{ invoice.amount|intcomma }}</td>
+                            <td>
+                                {% if invoice.is_paid %}
+                                    <span class="badge bg-success">PAID</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{% url 'property:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No invoices found for your properties.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
