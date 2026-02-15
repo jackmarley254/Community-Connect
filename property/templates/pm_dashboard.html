@@ -47,6 +47,9 @@
                     <a href="{% url 'property:pm_add_unit' %}" class="btn btn-outline-primary">
                         <i class="bi bi-door-open"></i> Add Unit
                     </a>
+                    <a href="{% url 'property:pm_manage_units' p.id %}" class="btn btn-sm btn-outline-dark w-100 mt-2">
+                    <i class="bi bi-sliders"></i> Manage Units & Assignments
+                    </a>
                     <a href="{% url 'property:bulk_create_units' %}" class="btn btn-outline-primary">
                         <i class="bi bi-collection"></i> Bulk Units
                     </a>

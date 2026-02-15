@@ -70,4 +70,8 @@ urlpatterns = [
     path('finance/expense/', views.log_expense_view, name='log_expense'),
     path('finance/report/', views.financial_report_view, name='financial_report'),
     path('finance/report/print/', views.financial_report_pdf_view, name='financial_report_print'),
+    # Unit Ecosystem Management
+    path('pm/manage-property/<int:property_id>/', views.pm_manage_units_view, name='pm_manage_units'),
+    path('pm/assign/landlord/<int:unit_id>/', views.assign_landlord_view, name='assign_landlord'),
+    path('pm/assign/tenant/<int:unit_id>/', views.assign_tenant_view, name='assign_tenant'),
 ]

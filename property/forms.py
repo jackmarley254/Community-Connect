@@ -1,6 +1,6 @@
 from django import forms
 from users.models import CustomUser
-from .models import Property, Unit, Announcement, Invoice, Ticket, ShortTermStay, MeterReading, Expense, PaymentConfiguration
+from .models import Property, Unit, Announcement, Invoice, Ticket, ShortTermStay, MeterReading, Expense, PaymentConfiguration, ParkingLot
 
 class CheckInForm(forms.ModelForm):
     unit_number = forms.CharField(max_length=20, label="Unit Number", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. A-104'}))
@@ -199,3 +199,63 @@ class BulkUnitCreationForm(forms.Form):
         super().__init__(*args, **kwargs)
         if org:
             self.fields['property'].queryset = Property.objects.filter(organization=org)
+
+class AssignLandlordForm(forms.Form):
+    landlord = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(role='HO'),
+        label="Select Landlord",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    # Allow assigning ownership of multiple parking spots
+    parking_lots = forms.ModelMultipleChoiceField(
+        queryset=ParkingLot.objects.none(),
+        required=False,
+        label="Assign Parking Ownership (Optional)",
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': '5'}),
+        help_text="Hold Ctrl/Cmd to select multiple lots."
+    )
+
+    def __init__(self, *args, **kwargs):
+        org = kwargs.pop('org', None)
+        super().__init__(*args, **kwargs)
+        if org:
+            # Show lots that belong to Org (no owner yet) or are already owned by this Org
+            self.fields['parking_lots'].queryset = ParkingLot.objects.filter(
+                property__organization=org, 
+                owner__isnull=True
+            ).order_by('lot_number')
+
+class AssignTenantForm(forms.Form):
+    tenant = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(role='T'),
+        label="Select Tenant",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    parking_lot = forms.ModelChoiceField(
+        queryset=ParkingLot.objects.none(),
+        required=False,
+        label="Assign Parking Lot (Inherited)",
+        empty_label="-- No Parking --",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        unit = kwargs.pop('unit', None)
+        super().__init__(*args, **kwargs)
+        if unit:
+            # RULE: Tenant inherits parking from Landlord
+            if unit.owner:
+                # Show only vacant lots OWNED by this Landlord
+                self.fields['parking_lot'].queryset = ParkingLot.objects.filter(
+                    owner=unit.owner,
+                    current_tenant__isnull=True
+                ).order_by('lot_number')
+                self.fields['parking_lot'].help_text = f"Showing lots owned by {unit.owner.username}"
+            else:
+                # Show vacant lots OWNED by Organization (Org units)
+                self.fields['parking_lot'].queryset = ParkingLot.objects.filter(
+                    property=unit.property,
+                    owner__isnull=True,
+                    current_tenant__isnull=True
+                ).order_by('lot_number')
+                self.fields['parking_lot'].help_text = "Showing Organization's available lots"

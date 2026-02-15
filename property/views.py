@@ -20,7 +20,7 @@ from users.forms import CreateUserForm, SupportMessageForm
 from .models import Property, Unit, ParkingLot, Notification, Ticket, Announcement, Invoice, ShortTermStay, VisitorLog, PaymentConfiguration, Meter, MeterReading, Expense, ExpenseCategory
 from .forms import (
     CheckInForm, FeedbackForm, MeterReadingForm, ExpenseForm, PaymentConfigForm,
-    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm, BulkParkingCreationForm, BulkUnitCreationForm
+    PMUserCreationForm, PropertyCreationForm, AnnouncementForm, InvoiceCreationForm, UnitCreationForm, BulkParkingCreationForm, BulkUnitCreationForm, AssignLandlordForm, AssignTenantForm
 )
 
 @login_required
@@ -1016,3 +1016,85 @@ def pm_add_unit_view(request):
         'form': form, 
         'title': 'Add New Unit'
     })
+
+# 1. THE LIST VIEW (Unit Ecosystem Manager)
+@login_required
+@role_required(['PM'])
+def pm_manage_units_view(request, property_id):
+    org = get_user_organization(request.user)
+    prop = get_object_or_404(Property, id=property_id, organization=org)
+    
+    # Get all units and prefetch related info to minimize DB queries
+    units = Unit.objects.filter(property=prop).select_related(
+        'owner', 'current_tenant'
+    ).order_by('block', 'floor', 'door_number')
+
+    # Helper: Attach assigned parking to unit object for display
+    # (This is a simplified way; optimized querysets would be better for scale)
+    for u in units:
+        u.assigned_parking = ParkingLot.objects.filter(current_tenant=u.current_tenant).first() if u.current_tenant else None
+
+    return render(request, 'pm_manage_units.html', {'property': prop, 'units': units})
+
+# 2. ASSIGN LANDLORD ACTION
+@login_required
+@role_required(['PM'])
+def assign_landlord_view(request, unit_id):
+    org = get_user_organization(request.user)
+    unit = get_object_or_404(Unit, id=unit_id, property__organization=org)
+    
+    if request.method == 'POST':
+        form = AssignLandlordForm(request.POST, org=org)
+        if form.is_valid():
+            landlord = form.cleaned_data['landlord']
+            lots = form.cleaned_data['parking_lots']
+            
+            # 1. Assign Unit Ownership
+            unit.owner = landlord
+            unit.organization_owner = None # Clear org ownership
+            unit.save()
+            
+            # 2. Assign Parking Ownership
+            for lot in lots:
+                lot.owner = landlord
+                lot.save()
+                
+            messages.success(request, f"Assigned Unit {unit.unit_number} to {landlord.username}.")
+            if lots: messages.info(request, f"Also transferred ownership of {lots.count()} parking lots.")
+            
+            return redirect('property:pm_manage_units', property_id=unit.property.id)
+    else:
+        form = AssignLandlordForm(org=org)
+        
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': f'Assign Landlord: {unit.unit_number}'})
+
+# 3. ASSIGN TENANT ACTION (With Parking Inheritance)
+@login_required
+@role_required(['PM'])
+def assign_tenant_view(request, unit_id):
+    org = get_user_organization(request.user)
+    unit = get_object_or_404(Unit, id=unit_id, property__organization=org)
+    
+    if request.method == 'POST':
+        form = AssignTenantForm(request.POST, unit=unit)
+        if form.is_valid():
+            tenant = form.cleaned_data['tenant']
+            parking = form.cleaned_data['parking_lot']
+            
+            # Check if tenant is already in another unit? (Optional check)
+            
+            # 1. Assign Unit
+            unit.current_tenant = tenant
+            unit.save()
+            
+            # 2. Assign Parking (if selected)
+            if parking:
+                parking.current_tenant = tenant
+                parking.save()
+                
+            messages.success(request, f"Tenant {tenant.username} moved into {unit.unit_number}.")
+            return redirect('property:pm_manage_units', property_id=unit.property.id)
+    else:
+        form = AssignTenantForm(unit=unit)
+        
+    return render(request, 'pm_form_generic.html', {'form': form, 'title': f'Assign Tenant: {unit.unit_number}'})
